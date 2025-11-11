@@ -1,0 +1,25 @@
+# Временные файлы Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Файлы окружения
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+*.log
+*.sqlite3
+instance/
+
+# Пип-пакеты
+pip-wheel-metadata/
