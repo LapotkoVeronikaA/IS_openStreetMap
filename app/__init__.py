@@ -15,8 +15,4 @@ def create_app(config_class=Config):
     from .main import main_bp
     app.register_blueprint(main_bp)
 
-    @app.route('/test')
-    def test_page():
-        return "<h1>It works!</h1>"
-
     return app

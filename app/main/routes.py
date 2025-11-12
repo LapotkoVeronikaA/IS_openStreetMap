@@ -4,4 +4,4 @@ from . import main_bp
 
 @main_bp.route('/')
 def dashboard():
-    return "<h1>Привет на главной странице!</h1>"
+    return render_template('dashboard.html')
