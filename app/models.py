@@ -1,5 +1,6 @@
 # app/models.py
 from app.extensions import db
+import json
 
 # Вспомогательная таблица для связи "многие-ко-многим" между группами и правами
 group_permissions = db.Table('group_permissions',
@@ -36,3 +37,18 @@ class User(db.Model):
     position = db.Column(db.String(120))
     
     def __repr__(self): return f'<User {self.username}>'
+
+class Organization(db.Model):
+    __tablename__ = 'organization'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False, index=True)
+    org_type = db.Column(db.String(100), nullable=True)
+    location = db.Column(db.String(255), nullable=False)
+    head_of_organization = db.Column(db.String(150))
+    notes = db.Column(db.Text)
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+    
+    def __repr__(self): return f'<Organization {self.name}>'
