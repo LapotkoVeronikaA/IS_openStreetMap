@@ -20,6 +20,9 @@ def create_app(config_class=Config):
     from .auth import auth_bp
     app.register_blueprint(auth_bp, url_prefix='/auth')
 
+    from .organizations import organizations_bp
+    app.register_blueprint(organizations_bp, url_prefix='/organizations')
+
     @app.context_processor
     def inject_global_vars():
         return dict(

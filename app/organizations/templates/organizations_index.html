@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Реестр Организаций{% endblock %}
+
+{% block content %}
+<div class="card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h4 mb-0">Реестр Организаций</h2>
+        {% if check_user_permission('manage_organizations') %}
+        <a href="#" class="btn btn-primary">Добавить организацию</a>
+        {% endif %}
+    </div>
+
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Название</th>
+                <th>Тип</th>
+                <th>Адрес</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for org in organizations %}
+            <tr>
+                <td><a href="#">{{ org.name }}</a></td>
+                <td>{{ org.org_type or '-' }}</td>
+                <td>{{ org.location or '-' }}</td>
+                <td>
+                    <a href="#" class="btn btn-sm btn-outline-primary">Редактировать</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" class="text-center">В реестре пока нет записей.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
