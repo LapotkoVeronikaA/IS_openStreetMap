@@ -32,3 +32,15 @@ def get_current_user_obj():
 
 def check_user_permission(permission_name):
     return False # Заглушка
+
+def manual_login_user(user):
+    session.permanent = True
+    session['user_id'] = user.id
+    session['username'] = user.username
+    session['logged_in'] = True
+
+def manual_logout_user():
+    session.clear()
+
+def check_user_permission(permission_name):
+    return False # Заглушка
