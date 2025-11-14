@@ -22,7 +22,7 @@ def login():
         else:
             flash('Неверное имя пользователя или пароль.', 'danger')
             
-    return "Login Page Stub" # Временная заглушка вместо шаблона
+    return render_template('login.html')
 
 @auth_bp.route('/logout')
 def logout():
