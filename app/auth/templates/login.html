@@ -5,32 +5,95 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-12 col-md-8 col-lg-6 col-xl-5">
-        <div class="card shadow-sm p-4">
+        <div class="card-modern p-4">
             <div class="text-center mb-4">
+                <i class="fas fa-user-lock fa-3x text-primary mb-3"></i>
                 <h2 class="h4">Вход в систему</h2>
             </div>
 
-            {# Отображение flash-сообщений #}
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
-            <form method="POST">
+            <form method="POST" class="needs-validation" novalidate>
                 <div class="mb-3">
-                    <label class="form-label">Логин</label>
-                    <input type="text" name="username" class="form-control" required autofocus>
+                    <label class="form-label">
+                        <i class="fas fa-user me-2"></i>Логин
+                    </label>
+                    <input type="text" 
+                           name="username" 
+                           class="form-control form-control-lg"
+                           required
+                           autofocus>
+                    <div class="invalid-feedback">
+                        Пожалуйста, введите логин
+                    </div>
                 </div>
+
                 <div class="mb-4">
-                    <label class="form-label">Пароль</label>
-                    <input type="password" name="password" class="form-control" required>
+                    <label class="form-label">
+                        <i class="fas fa-lock me-2"></i>Пароль
+                    </label>
+                    <input type="password" 
+                           name="password" 
+                           class="form-control form-control-lg"
+                           required>
+                    <div class="invalid-feedback">
+                        Пожалуйста, введите пароль
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary w-100">Войти</button>
+
+                <button type="submit" 
+                        class="btn btn-primary btn-lg w-100 mb-3">
+                    <i class="fas fa-sign-in-alt me-2"></i>Войти
+                </button>
+
+                {% if config.get('ALLOW_PASSWORD_RESET') %}
+                <div class="text-center small mt-3">
+                    <a href="/reset-password" class="text-muted">
+                        Забыли пароль?
+                    </a>
+                </div>
+                {% endif %}
             </form>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.card-modern {
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    padding: 2rem;
+}
+
+.form-control-lg {
+    padding: 1rem;
+    border-radius: 0.5rem;
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Валидация формы
+(() => {
+  'use strict'
+  const forms = document.querySelectorAll('.needs-validation')
+  
+  Array.from(forms).forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!form.checkValidity()) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+      form.classList.add('was-validated')
+    }, false)
+  })
+})()
+</script>
 {% endblock %}
