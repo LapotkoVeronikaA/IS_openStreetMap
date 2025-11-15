@@ -1,34 +1,131 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-lg navbar-dark" style="background: var(--primary-dark);">
     <div class="container">
-        <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">Реестр МУИВ</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+        <!-- Логотип -->
+        <a class="navbar-brand fw-bold" href="{{ url_for('main.dashboard') }}">
+            <i class="fas fa-university me-2"></i>Реестр МУИВ
+        </a>
+
+        <!-- Кнопка для мобильных -->
+        <button class="navbar-toggler" type="button" 
+                data-bs-toggle="collapse" data-bs-target="#mainNav">
             <span class="navbar-toggler-icon"></span>
         </button>
+
+        <!-- Основное меню -->
         <div class="collapse navbar-collapse" id="mainNav">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('main.dashboard') }}">Главная</a>
+                    <a class="nav-link" href="{{ url_for('main.dashboard') }}">
+                        <i class="fas fa-home me-2"></i>Главная
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('organizations.index') }}">
+                        <i class="fas fa-sitemap me-2"></i>Реестр
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-map-marked-alt me-2"></i>Карта
+                    </a>
+                </li>
+                 <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-newspaper me-2"></i>Новости
+                    </a>
+                </li>
+                
+                {% if check_user_permission('manage_users') or check_user_permission('manage_groups') %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-cogs me-2"></i>Администрирование
+                    </a>
+                    <ul class="dropdown-menu">
+                        {% if check_user_permission('manage_users') %}
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-users-cog fa-fw me-2"></i>Пользователи</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-inbox fa-fw me-2"></i>Обращения</a></li>
+                        {% endif %}
+                        {% if check_user_permission('manage_groups') %}
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-shield-alt fa-fw me-2"></i>Группы и права</a></li>
+                        {% endif %}
+                        {% if check_user_permission('manage_organizations') %}
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-book fa-fw me-2"></i>Справочники</a></li>
+                        {% endif %}
+                        {% if check_user_permission('view_logs') %}
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-clipboard-list fa-fw me-2"></i>Журнал действий</a></li>
+                        {% endif %}
+                    </ul>
+                </li>
+                {% endif %}
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-info-circle me-2"></i>Информация
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="fas fa-info-circle fa-fw me-2"></i>О проекте
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="fas fa-paper-plane fa-fw me-2"></i>Обратная связь
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="fas fa-question-circle fa-fw me-2"></i>Помощь
+                            </a>
+                        </li>
+                    </ul>
                 </li>
             </ul>
+            
             <ul class="navbar-nav ms-auto">
                 {% if current_user_obj() %}
+                    <!-- Меню пользователя -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" 
+                           href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-2"></i>
                             {{ current_user_obj().username }}
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Выйти</a></li>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                             <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-id-card fa-fw me-2"></i>Личный кабинет
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Выйти
+                                </a>
+                            </li>
                         </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('organizations.index') }}">Реестр</a>
-                    </li>
                 {% else %}
+                    <!-- Гостевое меню -->
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.login') }}">Войти</a>
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">
+                            <i class="fas fa-sign-in-alt me-2"></i>Войти
+                        </a>
                     </li>
                 {% endif %}
             </ul>
         </div>
     </div>
 </nav>
+
+{% if current_user_obj() %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Инициализируем все tooltip на странице
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endif %}
