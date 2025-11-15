@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="h4 mb-0">Реестр Организаций</h2>
         {% if check_user_permission('manage_organizations') %}
-        <a href="#" class="btn btn-primary">Добавить организацию</a>
+        <a href="{{ url_for('organizations.add_org') }}" class="btn btn-primary">Добавить организацию</a>
         {% endif %}
     </div>
 
@@ -26,14 +26,8 @@
                 <td><a href="#">{{ org.name }}</a></td>
                 <td>{{ org.org_type or '-' }}</td>
                 <td>{{ org.location or '-' }}</td>
-                <td>
-                    <a href="#" class="btn btn-sm btn-outline-primary">Редактировать</a>
-                </td>
-                <td>
-                    <a href="{{ url_for('organizations.view_org', org_id=org.id) }}">{{ org.name }}
-
-                    </a>
-                </td>
+                <td><a href="{{ url_for('organizations.edit_org', org_id=org.id) }}" class="btn btn-sm btn-outline-primary">Редактировать</a></td>
+                <td><a href="{{ url_for('organizations.view_org', org_id=org.id) }}">{{ org.name }}</a></td>
             </tr>
             {% else %}
             <tr>

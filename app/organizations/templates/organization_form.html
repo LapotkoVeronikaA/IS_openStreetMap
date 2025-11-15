@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}{% if org %}Редактирование организации{% else %}Новая организация{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card p-4">
+            <h2 class="h4 mb-4">
+                {% if org %}Редактирование: {{ org.name }}{% else %}Новая организация{% endif %}
+            </h2>
+
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Название</label>
+                    <input type="text" name="name" class="form-control" value="{{ org.name or form_data.name or '' }}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Тип организации</label>
+                    <input type="text" name="org_type" class="form-control" value="{{ org.org_type or form_data.org_type or '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Фактический адрес</label>
+                    <input type="text" name="location" class="form-control" value="{{ org.location or form_data.location or '' }}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Руководитель</label>
+                    <input type="text" name="head_of_organization" class="form-control" value="{{ org.head_of_organization or form_data.head_of_organization or '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Заметки</label>
+                    <textarea name="notes" class="form-control" rows="3">{{ org.notes or form_data.notes or '' }}</textarea>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <a href="{{ url_for('organizations.index') }}" class="btn btn-outline-secondary">Отмена</a>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

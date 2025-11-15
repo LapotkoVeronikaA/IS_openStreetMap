@@ -88,3 +88,8 @@ def permission_required_manual(permission_name):
             return f(*args, **kwargs)
         return decorated_function
     return decorator
+
+def log_user_activity(action, entity_type=None, entity_id=None, details_dict=None):
+    """Временная заглушка для логирования."""
+    print(f"LOG: User action: {action}")
+    pass

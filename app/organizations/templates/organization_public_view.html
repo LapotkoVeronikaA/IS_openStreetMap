@@ -10,7 +10,7 @@
             <p class="text-muted mb-0">{{ org.location }}</p>
         </div>
         {% if check_user_permission('manage_organizations') %}
-        <a href="#" class="btn btn-primary">Редактировать</a>
+        <a href="{{ url_for('organizations.edit_org', org_id=org.id) }}" class="btn btn-primary">Редактировать</a>
         {% endif %}
     </div>
 
