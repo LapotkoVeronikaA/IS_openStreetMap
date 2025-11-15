@@ -17,17 +17,18 @@
                 <th>Название</th>
                 <th>Тип</th>
                 <th>Адрес</th>
-                <th>Действия</th>
+                <th class="text-end">Действия</th>
             </tr>
         </thead>
         <tbody>
             {% for org in organizations %}
             <tr>
-                <td><a href="#">{{ org.name }}</a></td>
+                <td><a href="{{ url_for('organizations.view_org', org_id=org.id) }}">{{ org.name }}</a></td>
                 <td>{{ org.org_type or '-' }}</td>
                 <td>{{ org.location or '-' }}</td>
-                <td><a href="{{ url_for('organizations.edit_org', org_id=org.id) }}" class="btn btn-sm btn-outline-primary">Редактировать</a></td>
-                <td><a href="{{ url_for('organizations.view_org', org_id=org.id) }}">{{ org.name }}</a></td>
+                <td class="text-end">
+                    <a href="{{ url_for('organizations.edit_org', org_id=org.id) }}" class="btn btn-sm btn-outline-primary">Редактировать</a>
+                </td>
             </tr>
             {% else %}
             <tr>

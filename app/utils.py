@@ -33,30 +33,6 @@ def get_current_user_obj():
         return db.session.get(User, session['user_id'])
     return None
 
-def check_user_permission(permission_name):
-    from app.models import Group, Permission
-    user = get_current_user_obj()
-
-    if user:
-        if not user.group:
-            return False
-        
-        if user.group.name == 'Администратор':
-            return True
-        
-        user_permissions = {permission.name for permission in user.group.permissions}
-        return permission_name in user_permissions
-    else:
-        # Права для неавторизованного гостя
-        if 'guest_permissions' not in g:
-            guest_group = Group.query.filter_by(name='Гость').first()
-            if guest_group:
-                g.guest_permissions = {p.name for p in guest_group.permissions}
-            else:
-                g.guest_permissions = set()
-        return permission_name in g.guest_permissions
-
-
 def manual_login_user(user):
     session.permanent = True
     session['user_id'] = user.id
@@ -67,7 +43,25 @@ def manual_logout_user():
     session.clear()
 
 def check_user_permission(permission_name):
-    return False # Заглушка
+    from app.models import Group
+    user = get_current_user_obj()
+
+    if user:
+        if not user.group:
+            return False
+        if user.group.name == 'Администратор':
+            return True
+        user_permissions = {permission.name for permission in user.group.permissions}
+        return permission_name in user_permissions
+    else:
+        if 'guest_permissions' not in g:
+            guest_group = Group.query.filter_by(name='Гость').first()
+            if guest_group:
+                g.guest_permissions = {p.name for p in guest_group.permissions}
+            else:
+                g.guest_permissions = set()
+        return permission_name in g.guest_permissions
+
 
 def login_required_manual(f):
     @wraps(f)
@@ -83,9 +77,11 @@ def permission_required_manual(permission_name):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not check_user_permission(permission_name):
+                # Для гостей не показываем ошибку, а просим войти
                 if not get_current_user_obj():
                     flash('Для выполнения этого действия необходимо войти в систему.', 'warning')
                     return redirect(url_for('auth.login', next=request.url))
+                # Для залогиненных пользователей показываем ошибку прав
                 flash('У вас нет прав для выполнения этого действия.', 'danger')
                 return redirect(request.referrer or url_for('main.dashboard'))
             return f(*args, **kwargs)
@@ -93,6 +89,29 @@ def permission_required_manual(permission_name):
     return decorator
 
 def log_user_activity(action, entity_type=None, entity_id=None, details_dict=None):
-    """Временная заглушка для логирования."""
-    print(f"LOG: User action: {action}")
-    pass
+    from app.models import UserActivity
+    user = get_current_user_obj()
+    
+    user_id_val = user.id if user else None
+    username_val = user.username if user else "System/Unknown"
+
+    ip_addr = request.remote_addr if request else 'N/A'
+    
+    activity = UserActivity(
+        user_id=user_id_val,
+        username=username_val,
+        action=action,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        ip_address=ip_addr
+    )
+
+    if details_dict:
+        activity.set_details(details_dict)
+
+    db.session.add(activity)
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Ошибка при логировании действия '{action}': {e}")
