@@ -87,6 +87,7 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    {% from "_macros.html" import breadcrumbs %}
     {% include '_navbar.html' %}
 
     <main class="container py-4">

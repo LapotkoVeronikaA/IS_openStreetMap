@@ -1,0 +1,19 @@
+{# app/templates/_macros.html #}
+{% macro breadcrumbs(items) %}
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('main.dashboard') }}">
+                    <i class="fas fa-home"></i>
+                </a>
+            </li>
+            {% for text, url in items %}
+                {% if loop.last %}
+                    <li class="breadcrumb-item active" aria-current="page">{{ text }}</li>
+                {% else %}
+                    <li class="breadcrumb-item"><a href="{{ url }}">{{ text }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </nav>
+{% endmacro %}
