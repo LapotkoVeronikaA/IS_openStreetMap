@@ -34,18 +34,20 @@ def get_current_user_obj():
     return None
 
 def check_user_permission(permission_name):
-    from app.models import Group
+    from app.models import Group, Permission
     user = get_current_user_obj()
 
     if user:
         if not user.group:
             return False
+        
         if user.group.name == 'Администратор':
             return True
+        
         user_permissions = {permission.name for permission in user.group.permissions}
         return permission_name in user_permissions
     else:
-        # Для гостя
+        # Права для неавторизованного гостя
         if 'guest_permissions' not in g:
             guest_group = Group.query.filter_by(name='Гость').first()
             if guest_group:
@@ -53,6 +55,7 @@ def check_user_permission(permission_name):
             else:
                 g.guest_permissions = set()
         return permission_name in g.guest_permissions
+
 
 def manual_login_user(user):
     session.permanent = True
