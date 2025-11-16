@@ -7,3 +7,9 @@ from app.utils import (
     permission_required_manual
 )
 from . import users_bp
+
+@users_bp.route('/')
+@permission_required_manual('manage_users')
+def user_management():
+    users = User.query.options(db.joinedload(User.group)).all()
+    return render_template('users.html', users=users)
