@@ -43,15 +43,49 @@ class Organization(db.Model):
     __tablename__ = 'organization'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False, index=True)
+    legal_name = db.Column(db.String(255))
     org_type = db.Column(db.String(100), nullable=True)
-    location = db.Column(db.String(255), nullable=False)
+    location = db.Column(db.String(255), nullable=False) # Фактический адрес для геокодинга
     head_of_organization = db.Column(db.String(150))
+    website = db.Column(db.String(200))
+    main_phone = db.Column(db.String(100))
+    main_email = db.Column(db.String(120))
+    departments = db.Column(db.Text, nullable=True) # Замена 'subdivisions'
+    contacts = db.Column(db.Text, nullable=True)
     notes = db.Column(db.Text)
     latitude = db.Column(db.Float, nullable=True)
     longitude = db.Column(db.Float, nullable=True)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
     
+    def set_contacts(self, contacts_list):
+        if contacts_list: self.contacts = json.dumps(contacts_list, ensure_ascii=False)
+        else: self.contacts = None
+    def get_contacts(self):
+        if self.contacts:
+            try: return json.loads(self.contacts)
+            except json.JSONDecodeError: return []
+        return []
+        
+    def set_departments(self, departments_list):
+        if departments_list: self.departments = json.dumps(departments_list, ensure_ascii=False)
+        else: self.departments = None
+    def get_departments(self):
+        if self.departments:
+            try: return json.loads(self.departments)
+            except json.JSONDecodeError: return []
+        return []
+
+    @property
+    def total_employee_count(self):
+        total = 0
+        for dept in self.get_departments():
+            try:
+                total += int(dept.get('employee_count', 0) or 0)
+            except (ValueError, TypeError):
+                continue
+        return total
+        
     def __repr__(self): return f'<Organization {self.name}>'
 
 class UserActivity(db.Model):
