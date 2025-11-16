@@ -4,37 +4,36 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card p-4">
+    <div class="col-lg-10">
+        <div class="card-modern p-4">
             <h2 class="h4 mb-4">
-                {% if org %}Редактирование: {{ org.name }}{% else %}Новая организация{% endif %}
+                {% if org %}<i class="fas fa-edit me-3"></i>Редактирование: {{ org.name }}{% else %}<i class="fas fa-plus-circle me-3"></i>Новая организация{% endif %}
             </h2>
 
-            <form method="POST">
-                <div class="mb-3">
-                    <label class="form-label">Название</label>
-                    <input type="text" name="name" class="form-control" value="{{ org.name or form_data.name or '' }}" required>
+            <form method="POST" enctype="multipart/form-data">
+                <div class="row g-3">
+                    <div class="col-md-6"><label class="form-label">Название (например, "УК 'Кожуховский'")</label><input type="text" name="name" class="form-control" value="{{ org.name or form_data.name or '' }}" required></div>
+                    <div class="col-md-6"><label class="form-label">Юридическое название</label><input type="text" name="legal_name" class="form-control" value="{{ (org.legal_name or form_data.get('legal_name')) or 'ЧОУ ВО «Московский университет им. С.Ю. Витте»' }}"></div>
+                    <div class="col-md-8"><label class="form-label">Фактический адрес</label><input type="text" name="location" class="form-control" value="{{ org.location or form_data.location or '' }}" required></div>
+                    <div class="col-md-4"><label class="form-label">Тип организации</label><input type="text" name="org_type" class="form-control" value="{{ org.org_type or form_data.org_type or '' }}"></div>
+                    <div class="col-md-6"><label class="form-label">Руководитель (например, Ректор)</label><input type="text" name="head_of_organization" class="form-control" value="{{ org.head_of_organization or form_data.head_of_organization or '' }}"></div>
+                    <div class="col-md-6"><label class="form-label">Сайт</label><input type="url" name="website" class="form-control" value="{{ org.website or form_data.website or '' }}"></div>
+                    <div class="col-md-6"><label class="form-label">Основной телефон</label><input type="tel" name="main_phone" class="form-control" value="{{ org.main_phone or form_data.main_phone or '' }}"></div>
+                    <div class="col-md-6"><label class="form-label">Основной Email</label><input type="email" name="main_email" class="form-control" value="{{ org.main_email or form_data.main_email or '' }}"></div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Тип организации</label>
-                    <input type="text" name="org_type" class="form-control" value="{{ org.org_type or form_data.org_type or '' }}">
+                
+                <hr class="my-4">
+                
+                <h5 class="mb-3">Контактные лица</h5>
+                <div id="contacts-container">
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Фактический адрес</label>
-                    <input type="text" name="location" class="form-control" value="{{ org.location or form_data.location or '' }}" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Руководитель</label>
-                    <input type="text" name="head_of_organization" class="form-control" value="{{ org.head_of_organization or form_data.head_of_organization or '' }}">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Заметки</label>
-                    <textarea name="notes" class="form-control" rows="3">{{ org.notes or form_data.notes or '' }}</textarea>
-                </div>
+                <button type="button" id="add-contact-btn" class="btn btn-outline-primary mt-2"><i class="fas fa-plus me-2"></i>Добавить контакт</button>
+                
+                <div class="my-4"><label class="form-label">Заметки</label><textarea name="notes" class="form-control" rows="3">{{ org.notes or form_data.notes or '' }}</textarea></div>
 
                 <div class="d-flex justify-content-end gap-2 mt-4">
                     <a href="{{ url_for('organizations.index') }}" class="btn btn-outline-secondary">Отмена</a>
-                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Сохранить</button>
                 </div>
             </form>
         </div>
