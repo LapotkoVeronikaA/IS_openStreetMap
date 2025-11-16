@@ -16,12 +16,13 @@ def create_app(config_class=Config):
     # Регистрация блюпринтов
     from .main import main_bp
     app.register_blueprint(main_bp)
-
     from .auth import auth_bp
     app.register_blueprint(auth_bp, url_prefix='/auth')
-
+    from .users import users_bp
+    app.register_blueprint(users_bp, url_prefix='/users')
     from .organizations import organizations_bp
     app.register_blueprint(organizations_bp, url_prefix='/organizations')
+
 
     @app.context_processor
     def inject_global_vars():
