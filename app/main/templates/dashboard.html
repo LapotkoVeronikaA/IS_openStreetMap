@@ -2,11 +2,88 @@
 
 {% block title %}Главное меню{% endblock %}
 
+{% block breadcrumbs %}
+  {{ breadcrumbs([('Главное меню', '#')]) }}
+{% endblock %}
+
 {% block content %}
-<div class="p-5 mb-4 bg-light rounded-3">
-    <div class="container-fluid py-5">
-        <h1 class="display-5 fw-bold">Реестр МУИВ</h1>
-        <p class="col-md-8 fs-4">Добро пожаловать в систему!</p>
+<div class="card-modern p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h4 mb-0">
+            <i class="fas fa-home me-3"></i>Главное меню
+        </h2>
+    </div>
+
+    <div class="row g-4">
+        <!-- Карточка Интерактивной карты -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card-modern p-4 h-100 text-center">
+                <div class="bg-info bg-opacity-10 p-4 rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                    <i class="fas fa-map-marked-alt fa-3x text-info"></i>
+                </div>
+                <h3 class="h5 mb-2">Интерактивная карта</h3>
+                <p class="text-muted mb-4">Просмотр всех организаций на интерактивной карте</p>
+                <a href="#" class="btn btn-info w-100">
+                    Перейти <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Карточка Реестра организаций -->
+        {% if check_user_permission('view_organizations') %}
+        {% set org_url = url_for('organizations.index') %}
+        <div class="col-lg-4 col-md-6">
+            <div class="card-modern p-4 h-100 text-center">
+                <div class="bg-primary bg-opacity-10 p-4 rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                    <i class="fas fa-sitemap fa-3x text-primary"></i>
+                </div>
+                <h3 class="h5 mb-2">Реестр организаций</h3>
+                <p class="text-muted mb-4">Просмотр и управление базой организаций</p>
+                <a href="{{ org_url }}" class="btn btn-primary w-100">
+                    Перейти <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Карточка Администрирование -->
+        {% if check_user_permission('manage_users') or check_user_permission('manage_groups') or check_user_permission('view_logs') %}
+        {% set admin_url = '#' %}
+        <div class="col-lg-4 col-md-6">
+            <div class="card-modern p-4 h-100 text-center">
+                <div class="bg-purple bg-opacity-10 p-4 rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                    <i class="fas fa-cog fa-3x text-purple"></i>
+                </div>
+                <h3 class="h5 mb-2">Администрирование</h3>
+                <p class="text-muted mb-4">Управление системой, пользователями и справочниками</p>
+                <a href="{{ admin_url if current_user_obj() else url_for('auth.login', next=admin_url) }}" class="btn btn-purple w-100">
+                    Перейти <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.bg-purple {
+    background-color: #6f42c1 !important;
+}
+.text-purple {
+    color: #6f42c1 !important;
+}
+.btn-purple {
+    background-color: #6f42c1;
+    border-color: #6f42c1;
+    color: white;
+}
+.btn-purple:hover {
+    background-color: #5a32a3;
+    border-color: #5a32a3;
+    color: white;
+}
+</style>
 {% endblock %}
