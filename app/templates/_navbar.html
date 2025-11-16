@@ -42,7 +42,7 @@
                     </a>
                     <ul class="dropdown-menu">
                         {% if check_user_permission('manage_users') %}
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-users-cog fa-fw me-2"></i>Пользователи</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('users.user_management') }}"><i class="fas fa-users-cog fa-fw me-2"></i>Пользователи</a></li>
                         <li><a class="dropdown-item" href="#"><i class="fas fa-inbox fa-fw me-2"></i>Обращения</a></li>
                         {% endif %}
                         {% if check_user_permission('manage_groups') %}
