@@ -12,7 +12,7 @@
         <h2 class="h4 mb-0">
             <i class="fas fa-users-cog me-3"></i>Пользователи системы
         </h2>
-        <a href="#" class="btn btn-primary">
+        <a href="{{ url_for('users.add_user') }}" class="btn btn-primary">
             <i class="fas fa-user-plus me-2"></i>Добавить пользователя
         </a>
     </div>
@@ -24,17 +24,61 @@
                     <th>Логин</th>
                     <th>ФИО</th>
                     <th>Группа</th>
+                    <th>Отдел</th>
                     <th>Должность</th>
                     <th class="text-end">Действия</th>
                 </tr>
             </thead>
             <tbody>
-                {# Здесь будет цикл для вывода пользователей #}
+                {% for user in users %}
                 <tr>
-                    <td colspan="5" class="text-center text-muted">Пользователи еще не добавлены.</td>
+                    <td>
+                        <span class="fw-bold">{{ user.username }}</span>
+                        {% if user.group and user.group.name == 'Администратор' %}
+                        <i class="fas fa-star text-warning ms-2" data-bs-toggle="tooltip" title="Администратор"></i>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.full_name or '-' }}</td>
+                    <td>
+                        <span class="badge bg-primary bg-opacity-10 text-primary">
+                            {{ user.group.name if user.group else 'N/A' }}
+                        </span>
+                    </td>
+                    <td>{{ user.department or '-' }}</td>
+                    <td>{{ user.position or '-' }}</td>
+                    <td class="text-end">
+                        <div class="d-inline-flex gap-2">
+                            <a href="#" 
+                               class="btn btn-sm btn-outline-primary"
+                               data-bs-toggle="tooltip" 
+                               title="Редактировать">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="#" 
+                               class="btn btn-sm btn-outline-danger"
+                               data-bs-toggle="tooltip" 
+                               title="Удалить"
+                               onclick="return confirm('Вы уверены? Пользователь будет удален безвозвратно!')">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </div>
+                    </td>
                 </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Инициализация тултипов
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+})
+</script>
 {% endblock %}
