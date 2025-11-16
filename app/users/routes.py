@@ -14,6 +14,62 @@ def user_management():
     users = User.query.options(db.joinedload(User.group)).all()
     return render_template('users.html', users=users)
 
+@users_bp.route('/edit/<int:id>', methods=['GET', 'POST'])
+@permission_required_manual('manage_users')
+def edit_user(id):
+    user = User.query.options(db.joinedload(User.group)).get_or_404(id)
+    all_groups = Group.query.order_by(Group.name).all()
+
+    if request.method == 'POST':
+        changes = {}
+
+        new_username = request.form.get('username')
+        if new_username != user.username:
+            if User.query.filter(User.id != id, User.username == new_username).first():
+                flash(f'Имя пользователя {new_username} уже занято.', 'warning')
+                return render_template('edit_user.html', user=user, all_groups=all_groups)
+            changes['username'] = {'old': user.username, 'new': new_username}
+            user.username = new_username
+        
+        new_password_plain = request.form.get('password')
+        if new_password_plain:
+            user.password = new_password_plain
+            changes['password'] = {'old': '********', 'new': '********'}
+        
+        form_fields_to_check = ['full_name', 'department', 'position', 'contact_info']
+        for field in form_fields_to_check:
+            new_value = request.form.get(field)
+            old_value = getattr(user, field)
+            if (new_value or "") != (old_value or ""):
+                changes[field] = {'old': old_value, 'new': new_value}
+                setattr(user, field, new_value)
+        
+        new_group_id = request.form.get('group_id', type=int)
+        if new_group_id and new_group_id != user.group_id:
+            new_group = db.session.get(Group, new_group_id)
+            if new_group:
+                changes['group'] = {'old': user.group.name if user.group else 'N/A', 'new': new_group.name}
+                user.group_id = new_group_id
+            else:
+                flash(f'Выбрана несуществующая группа.', 'warning')
+
+        if not changes:
+            flash('Нет изменений для сохранения.', 'info')
+            return redirect(url_for('users.user_management'))
+
+        try:
+            db.session.commit()
+            log_user_activity(f"Обновление пользователя {user.username}", "User", user.id, details_dict=changes)
+            flash('Пользователь успешно обновлен!', 'success')
+            return redirect(url_for('users.user_management'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Ошибка при обновлении пользователя: {str(e)}', 'danger')
+            current_app.logger.error(f"Ошибка обновления пользователя {user.username}: {e}")
+            return render_template('edit_user.html', user=user, all_groups=all_groups)
+
+    return render_template('edit_user.html', user=user, all_groups=all_groups)
+
 @users_bp.route('/add', methods=['GET', 'POST'])
 @permission_required_manual('manage_users')
 def add_user():
