@@ -30,13 +30,14 @@ class Permission(db.Model):
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(120), nullable=False) # Пароль пока храним в открытом виде
+    password = db.Column(db.String(120), nullable=False)
     group_id = db.Column(db.Integer, db.ForeignKey('groups.id'), nullable=True)
     group = db.relationship('Group', back_populates='users')
     full_name = db.Column(db.String(120))
+    department = db.Column(db.String(120))
     position = db.Column(db.String(120))
+    contact_info = db.Column(db.Text)
     activities = db.relationship('UserActivity', backref='author', lazy='dynamic', cascade="all, delete-orphan")
-    
     def __repr__(self): return f'<User {self.username}>'
 
 class Organization(db.Model):
