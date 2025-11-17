@@ -13,7 +13,7 @@
     </h2>
 
     {# Форма фильтров #}
-    <div class="filters-container bg-light p-3 mb-4 border rounded">
+    <div class.filters-container bg-light p-3 mb-4 border rounded">
         <h5 class="mb-3">Фильтры</h5>
         <form method="GET" action="{{ url_for('logs.view_logs') }}">
             <div class="row g-3">
@@ -66,12 +66,87 @@
                 </tr>
             </thead>
             <tbody>
-                {# Сюда будет выводиться список логов #}
+                {% for log_entry in logs.items %}
                 <tr>
-                    <td colspan="7" class="text-center">Записи отсутствуют.</td>
+                    <td>{{ log_entry.timestamp.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    <td>{{ log_entry.username }}</td>
+                    <td>{{ log_entry.ip_address }}</td>
+                    <td>{{ log_entry.action }}</td>
+                    <td>{{ log_entry.entity_type or '-' }}</td>
+                    <td>{{ log_entry.entity_id or '-' }}</td>
+                    <td>
+                        {% set details = log_entry.get_details() %}
+                        {% if details %}
+                            {% if details.error %}
+                                <span class="text-danger small">{{ details.error }}</span>
+                            {% else %}
+                                <ul class="list-unstyled mb-0 small" style="max-height: 100px; overflow-y: auto;">
+                                    {% for key, value in details.items()|sort %}
+                                        <li>
+                                            <strong>{{ key }}:</strong>
+                                            {% if value is mapping and 'old' in value and 'new' in value %}
+                                                <span class="text-muted" style="text-decoration: line-through;">{{ value.old if value.old is not none else '-' }}</span>
+                                                <i class="fas fa-arrow-right mx-1 text-primary"></i>
+                                                <span>{{ value.new if value.new is not none else '-' }}</span>
+                                            {% elif value is mapping %}
+                                                 <ul class="list-unstyled ms-2">
+                                                 {% for sub_key, sub_value in value.items()|sort %}
+                                                    <li><em>{{ sub_key }}:</em> {{ sub_value }}</li>
+                                                 {% endfor %}
+                                                 </ul>
+                                            {% elif value is iterable and value is not string %}
+                                                <ul class="list-unstyled ms-2">
+                                                {% for item in value %}
+                                                    <li>- {{ item }}</li>
+                                                {% endfor %}
+                                                </ul>
+                                            {% else %}
+                                                {{ value }}
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                 </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center">Записи, соответствующие вашему запросу, отсутствуют.</td>
+                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
+
+    {% if logs.pages > 1 %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if not logs.has_prev %}disabled{% endif %}">
+                {% set prev_args = request.args.to_dict() %}
+                {% do prev_args.pop('page', None) %}
+                <a class="page-link" href="{{ url_for('logs.view_logs', page=logs.prev_num, **prev_args) if logs.has_prev else '#_disabled' }}">Назад</a>
+            </li>
+            {% for page_num in logs.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    <li class="page-item {% if page_num == logs.page %}active{% endif %}">
+                        {% set page_args = request.args.to_dict() %}
+                        {% do page_args.pop('page', None) %}
+                        <a class="page-link" href="{{ url_for('logs.view_logs', page=page_num, **page_args) }}">{{ page_num }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            <li class="page-item {% if not logs.has_next %}disabled{% endif %}">
+                {% set next_args = request.args.to_dict() %}
+                {% do next_args.pop('page', None) %}
+                <a class="page-link" href="{{ url_for('logs.view_logs', page=logs.next_num, **next_args) if logs.has_next else '#_disabled' }}">Вперед</a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
 </div>
 {% endblock %}
