@@ -49,7 +49,7 @@
                         <li><a class="dropdown-item" href="{{ url_for('groups.index') }}"><i class="fas fa-shield-alt fa-fw me-2"></i>Группы и права</a></li>
                         {% endif %}
                         {% if check_user_permission('manage_organizations') %}
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-book fa-fw me-2"></i>Справочники</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('generic_directory.index') }}"><i class="fas fa-book fa-fw me-2"></i>Справочники</a></li>
                         {% endif %}
                         {% if check_user_permission('view_logs') %}
                         <li><a class="dropdown-item" href="{{ url_for('logs.view_logs') }}"><i class="fas fa-clipboard-list fa-fw me-2"></i>Журнал действий</a></li>
