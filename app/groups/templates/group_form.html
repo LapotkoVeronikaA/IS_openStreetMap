@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}{% if group %}Редактирование группы{% else %}Создание группы{% endif %}{% endblock %}
+
+{% block breadcrumbs %}
+    {% if group %}
+        {{ breadcrumbs([('Управление группами и правами', url_for('groups.index')), ('Редактирование группы: ' ~ group.name, '#')]) }}
+    {% else %}
+        {{ breadcrumbs([('Управление группами и правами', url_for('groups.index')), ('Создание группы', '#')]) }}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-10">
+        <div class="card-modern p-4">
+            <h2 class="h4 mb-4">
+                <i class="fas fa-shield-alt me-3"></i>
+                {% if group %}Редактирование группы: {{ group.name }}{% else %}Создание новой группы{% endif %}
+            </h2>
+
+            <form method="POST" class="needs-validation" novalidate>
+                <div class="mb-4">
+                    <label for="group-name" class="form-label fw-bold">Название группы</label>
+                    <input type="text" id="group-name" name="name" class="form-control" value="{{ group.name or '' }}" required>
+                </div>
+
+                <div class="mb-4">
+                    <h3 class="h5 mb-3 fw-bold border-bottom pb-2">Права доступа</h3>
+                    
+                    {% for category, permissions_list in categorized_permissions.items() %}
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h4 class="h6 mb-0 text-primary">
+                                {% if category == 'Реестр ГК' %}<i class="fas fa-file-contract fa-fw me-2"></i>
+                                {% elif category == 'Инвентаризация' %}<i class="fas fa-boxes fa-fw me-2"></i>
+                                {% elif category == 'Справочник' %}<i class="fas fa-book-open fa-fw me-2"></i>
+                                {% elif category == 'Интерактивная карта' %}<i class="fas fa-map-marked-alt fa-fw me-2"></i>
+                                {% elif category == 'Администрирование' %}<i class="fas fa-cogs fa-fw me-2"></i>
+                                {% else %}<i class="fas fa-puzzle-piece fa-fw me-2"></i>{% endif %}
+                                {{ category }}
+                            </h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for permission in permissions_list|sort(attribute='description') %}
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" name="permissions" value="{{ permission.id }}" id="perm_{{ permission.id }}" {% if permission.id in selected_permissions %}checked{% endif %}>
+                                        <label class="form-check-label" for="perm_{{ permission.id }}">
+                                            {{ permission.description }} 
+                                            <span class="text-muted small">({{ permission.name }})</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                        <div class="alert alert-warning">В системе не найдено доступных прав.</div>
+                    {% endfor %}
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <a href="{{ url_for('groups.index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-2"></i>Отмена
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Сохранить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
