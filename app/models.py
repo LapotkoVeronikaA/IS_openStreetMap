@@ -1,6 +1,7 @@
 # app/models.py
 from app.extensions import db
 import json
+from sqlalchemy import UniqueConstraint
 
 # Вспомогательная таблица для связи "многие-ко-многим" между группами и правами
 group_permissions = db.Table('group_permissions',
@@ -39,6 +40,24 @@ class User(db.Model):
     contact_info = db.Column(db.Text)
     activities = db.relationship('UserActivity', backref='author', lazy='dynamic', cascade="all, delete-orphan")
     def __repr__(self): return f'<User {self.username}>'
+
+class UserActivity(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_user_activity_user_id'), nullable=True)
+    username = db.Column(db.String(80), nullable=False)
+    action = db.Column(db.String(255), nullable=False)
+    entity_type = db.Column(db.String(50))
+    entity_id = db.Column(db.Integer)
+    ip_address = db.Column(db.String(50))
+    timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
+    details = db.Column(db.Text) 
+    def __repr__(self): return f'<UserActivity {self.username} - {self.action[:30]}>'
+    def set_details(self, data): self.details = json.dumps(data, ensure_ascii=False, indent=2)
+    def get_details(self):
+        if self.details:
+            try: return json.loads(self.details)
+            except json.JSONDecodeError: return {"error": "Invalid JSON data in details"}
+        return None
 
 class Organization(db.Model):
     __tablename__ = 'organization'
@@ -89,20 +108,14 @@ class Organization(db.Model):
         
     def __repr__(self): return f'<Organization {self.name}>'
 
-class UserActivity(db.Model):
+class GenericDirectoryItem(db.Model):
+    __tablename__ = 'generic_directory_item'
+    
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_user_activity_user_id'), nullable=True)
-    username = db.Column(db.String(80), nullable=False)
-    action = db.Column(db.String(255), nullable=False)
-    entity_type = db.Column(db.String(50))
-    entity_id = db.Column(db.Integer)
-    ip_address = db.Column(db.String(50))
-    timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
-    details = db.Column(db.Text) 
-    def __repr__(self): return f'<UserActivity {self.username} - {self.action[:30]}>'
-    def set_details(self, data): self.details = json.dumps(data, ensure_ascii=False, indent=2)
-    def get_details(self):
-        if self.details:
-            try: return json.loads(self.details)
-            except json.JSONDecodeError: return {"error": "Invalid JSON data in details"}
-        return None
+    directory_type = db.Column(db.String(100), nullable=False, index=True)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    __table_args__ = (UniqueConstraint('directory_type', 'name', name='uq_directory_type_name'),)
+
+    def __repr__(self):
+        return f'<GenericDirectoryItem [{self.directory_type}] {self.name}>'
