@@ -22,6 +22,8 @@ def create_app(config_class=Config):
     app.register_blueprint(users_bp, url_prefix='/users')
     from .organizations import organizations_bp
     app.register_blueprint(organizations_bp, url_prefix='/organizations')
+    from .groups import groups_bp
+    app.register_blueprint(groups_bp, url_prefix='/groups')
 
 
     @app.context_processor
