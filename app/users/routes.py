@@ -110,3 +110,22 @@ def add_user():
             return render_template('add_user.html', form_data=request.form, all_groups=all_groups)
             
     return render_template('add_user.html', form_data={}, all_groups=all_groups)
+
+
+@users_bp.route('/delete/<int:id>')
+@permission_required_manual('manage_users')
+def delete_user(id):
+    user = User.query.get_or_404(id)
+    username_deleted = user.username
+    user_group_deleted = user.group.name if user.group else "N/A"
+    
+    db.session.delete(user)
+    try:
+        db.session.commit()
+        log_user_activity(f"Удаление пользователя {username_deleted}", "User", id, details_dict={"deleted_username": username_deleted, "deleted_group": user_group_deleted})
+        flash('Пользователь успешно удален.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка при удалении пользователя: {str(e)}', 'danger')
+        current_app.logger.error(f"Ошибка удаления пользователя: {e}")
+    return redirect(url_for('users.user_management'))
