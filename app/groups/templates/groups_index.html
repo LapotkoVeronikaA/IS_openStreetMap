@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Управление группами{% endblock %}
+
+{% block breadcrumbs %}
+  {{ breadcrumbs([('Управление группами и правами', '#')]) }}
+{% endblock %}
+
+{% block content %}
+<div class="card-modern p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h4 mb-0">
+            <i class="fas fa-shield-alt me-3"></i>Управление группами и правами
+        </h2>
+        <a href="#" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Создать группу
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-modern table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Название группы</th>
+                    <th>Права доступа</th>
+                    <th class="text-end">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {# Здесь будет цикл для вывода групп #}
+                <tr>
+                    <td colspan="3" class="text-center text-muted">Группы еще не созданы.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+})
+</script>
+{% endblock %}
