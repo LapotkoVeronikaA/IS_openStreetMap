@@ -2,34 +2,86 @@
 
 {% block title %}{% if org %}Редактирование организации{% else %}Новая организация{% endif %}{% endblock %}
 
+{% block breadcrumbs %}
+    {% if org %}
+        {{ breadcrumbs([('Реестр организаций', url_for('organizations.index')), (org.name, url_for('organizations.view_org', org_id=org.id)), ('Редактирование', '#')]) }}
+    {% else %}
+        {{ breadcrumbs([('Реестр организаций', url_for('organizations.index')), ('Новая организация', '#')]) }}
+    {% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-10">
         <div class="card-modern p-4">
             <h2 class="h4 mb-4">
-                {% if org %}<i class="fas fa-edit me-3"></i>Редактирование: {{ org.name }}{% else %}<i class="fas fa-plus-circle me-3"></i>Новая организация{% endif %}
+                {% if org %}<i class="fas fa-edit me-3"></i>Редактирование: {{ form_data.name }}{% else %}<i class="fas fa-plus-circle me-3"></i>Новая организация{% endif %}
             </h2>
 
             <form method="POST" enctype="multipart/form-data">
                 <div class="row g-3">
-                    <div class="col-md-6"><label class="form-label">Название (например, "УК 'Кожуховский'")</label><input type="text" name="name" class="form-control" value="{{ org.name or form_data.name or '' }}" required></div>
-                    <div class="col-md-6"><label class="form-label">Юридическое название</label><input type="text" name="legal_name" class="form-control" value="{{ (org.legal_name or form_data.get('legal_name')) or 'ЧОУ ВО «Московский университет им. С.Ю. Витте»' }}"></div>
-                    <div class="col-md-8"><label class="form-label">Фактический адрес</label><input type="text" name="location" class="form-control" value="{{ org.location or form_data.location or '' }}" required></div>
-                    <div class="col-md-4"><label class="form-label">Тип организации</label><input type="text" name="org_type" class="form-control" value="{{ org.org_type or form_data.org_type or '' }}"></div>
-                    <div class="col-md-6"><label class="form-label">Руководитель (например, Ректор)</label><input type="text" name="head_of_organization" class="form-control" value="{{ org.head_of_organization or form_data.head_of_organization or '' }}"></div>
-                    <div class="col-md-6"><label class="form-label">Сайт</label><input type="url" name="website" class="form-control" value="{{ org.website or form_data.website or '' }}"></div>
-                    <div class="col-md-6"><label class="form-label">Основной телефон</label><input type="tel" name="main_phone" class="form-control" value="{{ org.main_phone or form_data.main_phone or '' }}"></div>
-                    <div class="col-md-6"><label class="form-label">Основной Email</label><input type="email" name="main_email" class="form-control" value="{{ org.main_email or form_data.main_email or '' }}"></div>
+                    <div class="col-md-6"><label class="form-label">Название (например, "УК 'Кожуховский'")</label><input type="text" name="name" class="form-control" value="{{ form_data.name or '' }}" required></div>
+                    <div class="col-md-6"><label class="form-label">Юридическое название</label><input type="text" name="legal_name" class="form-control" value="{{ form_data.legal_name or 'ЧОУ ВО «Московский университет им. С.Ю. Витте»' }}"></div>
+                    <div class="col-md-8"><label class="form-label">Фактический адрес</label><input type="text" name="location" class="form-control" value="{{ form_data.location or '' }}" required></div>
+                    <div class="col-md-4"><label class="form-label">Тип организации</label>
+                        <select name="org_type" class="form-select">
+                            <option value="">-- Не выбрано --</option>
+                            {% for type in organization_types %}<option value="{{ type.name }}" {% if form_data.org_type == type.name %}selected{% endif %}>{{ type.name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6"><label class="form-label">Руководитель (например, Ректор)</label><input type="text" name="head_of_organization" class="form-control" value="{{ form_data.head_of_organization or '' }}"></div>
+                    <div class="col-md-6"><label class="form-label">Сайт</label><input type="url" name="website" class="form-control" value="{{ form_data.website or '' }}"></div>
+                    <div class="col-md-6"><label class="form-label">Основной телефон</label><input type="tel" name="main_phone" class="form-control" value="{{ form_data.main_phone or '' }}"></div>
+                    <div class="col-md-6"><label class="form-label">Основной Email</label><input type="email" name="main_email" class="form-control" value="{{ form_data.main_email or '' }}"></div>
                 </div>
+                
+                <hr class="my-4">
+
+                <h5 class="mb-3">Факультеты / Отделы ({{ form_data.total_employee_count or 0 }} чел.)</h5>
+                <div id="departments-container">
+                    {% set departments = form_data.get_departments() if form_data and form_data.get_departments is defined else [] %}
+                    {% for dept in departments %}
+                    <div class="department-group border rounded p-3 mb-3">
+                        <button type="button" class="btn-close float-end remove-department-btn" title="Удалить отдел"></button>
+                        <div class="row g-3">
+                            <div class="col-md-5"><label class="form-label">Факультет/Управление</label>
+                                <select name="department_faculty" class="form-select">
+                                    <option value="">-- Не выбрано --</option>
+                                    {% for faculty in faculty_names %}<option value="{{ faculty.name }}" {% if dept.faculty == faculty.name %}selected{% endif %}>{{ faculty.name }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-5"><label class="form-label">Отдел/Кафедра</label>
+                                <select name="department_name" class="form-select">
+                                    <option value="">-- Не выбрано --</option>
+                                    {% for d_name in department_names %}<option value="{{ d_name.name }}" {% if dept.department == d_name.name %}selected{% endif %}>{{ d_name.name }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2"><label class="form-label">Сотрудников</label><input type="number" name="department_employee_count" class="form-control" value="{{ dept.employee_count or '' }}"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="button" id="add-department-btn" class="btn btn-outline-primary mt-2"><i class="fas fa-plus me-2"></i>Добавить отдел</button>
                 
                 <hr class="my-4">
                 
                 <h5 class="mb-3">Контактные лица</h5>
                 <div id="contacts-container">
+                    {% set contacts = form_data.get_contacts() if form_data and form_data.get_contacts is defined else [] %}
+                    {% for contact in contacts %}
+                    <div class="contact-group border rounded p-3 mb-3">
+                        <button type="button" class="btn-close float-end remove-contact-btn" title="Удалить контакт"></button>
+                        <div class="row g-3">
+                            <div class="col-md-12"><label class="form-label">ФИО</label><input type="text" name="contact_full_name" class="form-control" value="{{ contact.full_name or '' }}"></div>
+                            <div class="col-md-6"><label class="form-label">Должность</label><input type="text" name="contact_position" class="form-control" value="{{ contact.position or '' }}"></div>
+                            <div class="col-md-6"><label class="form-label">Телефон</label><input type="text" name="contact_phone" class="form-control" value="{{ contact.phone or '' }}"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
                 <button type="button" id="add-contact-btn" class="btn btn-outline-primary mt-2"><i class="fas fa-plus me-2"></i>Добавить контакт</button>
                 
-                <div class="my-4"><label class="form-label">Заметки</label><textarea name="notes" class="form-control" rows="3">{{ org.notes or form_data.notes or '' }}</textarea></div>
+                <div class="my-4"><label class="form-label">Заметки</label><textarea name="notes" class="form-control" rows="3">{{ form_data.notes or '' }}</textarea></div>
 
                 <div class="d-flex justify-content-end gap-2 mt-4">
                     <a href="{{ url_for('organizations.index') }}" class="btn btn-outline-secondary">Отмена</a>
@@ -39,4 +91,58 @@
         </div>
     </div>
 </div>
+
+<template id="department-template">
+    <div class="department-group border rounded p-3 mb-3">
+        <button type="button" class="btn-close float-end remove-department-btn" title="Удалить отдел"></button>
+        <div class="row g-3">
+            <div class="col-md-5"><label class="form-label">Факультет/Управление</label>
+                <select name="department_faculty" class="form-select">
+                    <option value="">-- Не выбрано --</option>
+                    {% for faculty in faculty_names %}<option value="{{ faculty.name }}">{{ faculty.name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-md-5"><label class="form-label">Отдел/Кафедра</label>
+                <select name="department_name" class="form-select">
+                    <option value="">-- Не выбрано --</option>
+                    {% for d_name in department_names %}<option value="{{ d_name.name }}">{{ d_name.name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2"><label class="form-label">Сотрудников</label><input type="number" name="department_employee_count" class="form-control"></div>
+        </div>
+    </div>
+</template>
+
+<template id="contact-template">
+    <div class="contact-group border rounded p-3 mb-3">
+        <button type="button" class="btn-close float-end remove-contact-btn" title="Удалить контакт"></button>
+        <div class="row g-3">
+            <div class="col-md-12"><label class="form-label">ФИО</label><input type="text" name="contact_full_name" class="form-control"></div>
+            <div class="col-md-6"><label class="form-label">Должность</label><input type="text" name="contact_position" class="form-control"></div>
+            <div class="col-md-6"><label class="form-label">Телефон</label><input type="text" name="contact_phone" class="form-control"></div>
+        </div>
+    </div>
+</template>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function setupDynamicList(containerId, buttonId, templateId, groupClass, removeBtnClass) {
+        const container = document.getElementById(containerId);
+        const addButton = document.getElementById(buttonId);
+        const template = document.getElementById(templateId);
+        addButton.addEventListener('click', () => container.appendChild(template.content.cloneNode(true)));
+        container.addEventListener('click', (event) => {
+            if (event.target.closest(removeBtnClass)) {
+                event.target.closest(groupClass).remove();
+            }
+        });
+    }
+
+    setupDynamicList('departments-container', 'add-department-btn', 'department-template', '.department-group', '.remove-department-btn');
+    setupDynamicList('contacts-container', 'add-contact-btn', 'contact-template', '.contact-group', '.remove-contact-btn');
+});
+</script>
+{% endblock %}
+```--- END OF FILE app/organizations/templates/organization_form.html ---
