@@ -54,7 +54,7 @@
                                title="Редактировать">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <a href="#" 
+                            <a href="{{ url_for('users.delete_user', id=user.id) }}" 
                                class="btn btn-sm btn-outline-danger"
                                data-bs-toggle="tooltip" 
                                title="Удалить"
