@@ -4,6 +4,7 @@ from functools import wraps
 from app.extensions import db
 import requests
 import os
+# Модели импортируются локально внутри функций для избежания циклических зависимостей.
 
 USER_GROUPS = {
     'admin': {
@@ -115,3 +116,40 @@ def log_user_activity(action, entity_type=None, entity_id=None, details_dict=Non
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Ошибка при логировании действия '{action}': {e}")
+
+def geocode_location(location_string):
+    api_key = current_app.config.get('YANDEX_GEOCODER_API_KEY')
+    if not api_key:
+        current_app.logger.error("YANDEX_GEOCODER_API_KEY не установлен в конфигурации.")
+        return None, None
+
+    api_url = "https://geocode-maps.yandex.ru/1.x/"
+    params = {
+        "apikey": api_key,
+        "format": "json",
+        "geocode": location_string,
+        "results": 1
+    }
+    try:
+        response = requests.get(api_url, params=params)
+        response.raise_for_status()
+        data = response.json()
+        
+        feature_member = data['response']['GeoObjectCollection']['featureMember']
+        if not feature_member:
+            current_app.logger.warning(f"Не удалось геокодировать: '{location_string}'. Ответ API пуст.")
+            return None, None
+
+        geo_object = feature_member[0]['GeoObject']
+        point = geo_object['Point']['pos']
+        longitude, latitude = map(float, point.split())
+        
+        current_app.logger.info(f"Адрес '{location_string}' успешно геокодирован: [{latitude}, {longitude}]")
+        return latitude, longitude
+
+    except requests.exceptions.RequestException as e:
+        current_app.logger.error(f"Ошибка запроса к API Яндекс.Геокодера: {e}")
+    except (KeyError, IndexError, ValueError) as e:
+        current_app.logger.error(f"Ошибка парсинга ответа от API Яндекс.Геокодера для '{location_string}': {e}")
+    
+    return None, None

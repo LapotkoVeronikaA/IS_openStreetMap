@@ -2,7 +2,7 @@
 from flask import render_template, request, redirect, url_for, flash
 from app.models import Organization, GenericDirectoryItem
 from app.extensions import db
-from app.utils import permission_required_manual, log_user_activity
+from app.utils import permission_required_manual, log_user_activity, geocode_location
 from . import organizations_bp
 
 @organizations_bp.route('/')
@@ -25,20 +25,25 @@ def add_org():
     organization_types = GenericDirectoryItem.query.filter_by(directory_type='organization_types').order_by(GenericDirectoryItem.name).all()
 
     if request.method == 'POST':
-        if not request.form.get('name') or not request.form.get('location'):
+        location_str = request.form.get('location')
+        if not request.form.get('name') or not location_str:
             flash('Поля "Название" и "Адрес" являются обязательными.', 'danger')
-            return render_template('organization_form.html', form_data=request.form, faculty_names=faculty_names, department_names=department_names, organization_types=organization_types)
+            return render_template('organization_form.html', org=None, form_data=request.form, faculty_names=faculty_names, department_names=department_names, organization_types=organization_types)
+
+        lat, lon = geocode_location(location_str)
 
         new_org = Organization(
             name=request.form.get('name'),
             legal_name=request.form.get('legal_name'),
             org_type=request.form.get('org_type'),
-            location=request.form.get('location'),
+            location=location_str,
             head_of_organization=request.form.get('head_of_organization'),
             website=request.form.get('website'),
             main_phone=request.form.get('main_phone'),
             main_email=request.form.get('main_email'),
             notes=request.form.get('notes'),
+            latitude=lat,
+            longitude=lon
         )
         
         new_org.set_contacts([{"full_name": n, "position": p, "phone": ph} for n, p, ph in zip(request.form.getlist('contact_full_name'), request.form.getlist('contact_position'), request.form.getlist('contact_phone')) if n.strip()])
@@ -63,14 +68,20 @@ def edit_org(org_id):
     organization_types = GenericDirectoryItem.query.filter_by(directory_type='organization_types').order_by(GenericDirectoryItem.name).all()
     
     if request.method == 'POST':
-        if not request.form.get('name') or not request.form.get('location'):
+        new_location_str = request.form.get('location')
+        if not request.form.get('name') or not new_location_str:
             flash('Поля "Название" и "Адрес" являются обязательными.', 'danger')
             return render_template('organization_form.html', org=org, faculty_names=faculty_names, department_names=department_names, organization_types=organization_types)
 
+        if org.location != new_location_str:
+            lat, lon = geocode_location(new_location_str)
+            org.latitude = lat
+            org.longitude = lon
+        
         org.name = request.form.get('name')
         org.legal_name = request.form.get('legal_name')
         org.org_type = request.form.get('org_type')
-        org.location = request.form.get('location')
+        org.location = new_location_str
         org.head_of_organization = request.form.get('head_of_organization')
         org.website = request.form.get('website')
         org.main_phone = request.form.get('main_phone')
