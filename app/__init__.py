@@ -20,6 +20,8 @@ def create_app(config_class=Config):
     app.register_blueprint(auth_bp, url_prefix='/auth')
     from .users import users_bp
     app.register_blueprint(users_bp, url_prefix='/users')
+    from .logs import logs_bp
+    app.register_blueprint(logs_bp, url_prefix='/logs')
     from .organizations import organizations_bp
     app.register_blueprint(organizations_bp, url_prefix='/organizations')
     from .groups import groups_bp
