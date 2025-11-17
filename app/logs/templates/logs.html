@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Журнал действий{% endblock %}
+
+{% block breadcrumbs %}
+  {{ breadcrumbs([('Журнал действий', '#')]) }}
+{% endblock %}
+
+{% block content %}
+<div class="card-modern p-4">
+    <h2 class="h4 mb-4">
+        <i class="fas fa-clipboard-list me-3"></i>Журнал действий пользователей
+    </h2>
+
+    {# Форма фильтров #}
+    <div class="filters-container bg-light p-3 mb-4 border rounded">
+        <h5 class="mb-3">Фильтры</h5>
+        <form method="GET" action="{{ url_for('logs.view_logs') }}">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="username_filter" class="form-label">Пользователь:</label>
+                    <input type="text" id="username_filter" name="username" value="{{ request.args.get('username', '') }}" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-3">
+                    <label for="action_filter" class="form-label">Действие (содержит):</label>
+                    <input type="text" id="action_filter" name="action" value="{{ request.args.get('action', '') }}" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-2">
+                    <label for="entity_type_filter" class="form-label">Тип сущности:</label>
+                    <input type="text" id="entity_type_filter" name="entity_type" value="{{ request.args.get('entity_type', '') }}" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-2">
+                    <label for="entity_id_filter" class="form-label">ID сущности:</label>
+                    <input type="number" id="entity_id_filter" name="entity_id" value="{{ request.args.get('entity_id', '') }}" class="form-control form-control-sm">
+                </div>
+                 <div class="col-md-3">
+                    <label for="date_from_filter" class="form-label">Дата от:</label>
+                    <input type="date" id="date_from_filter" name="date_from" value="{{ request.args.get('date_from', '') }}" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-3">
+                    <label for="date_to_filter" class="form-label">Дата до:</label>
+                    <input type="date" id="date_to_filter" name="date_to" value="{{ request.args.get('date_to', '') }}" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-2 align-self-end">
+                    <button type="submit" class="btn btn-primary btn-sm w-100">Применить</button>
+                </div>
+                <div class="col-md-2 align-self-end">
+                    <a href="{{ url_for('logs.view_logs') }}" class="btn btn-outline-secondary btn-sm w-100">Сбросить</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+
+    <div class="table-responsive">
+        <table class="table table-modern table-hover table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 15%;">Дата/Время</th>
+                    <th style="width: 15%;">Пользователь</th>
+                    <th style="width: 10%;">IP</th>
+                    <th style="width: 20%;">Действие</th>
+                    <th style="width: 10%;">Сущность</th>
+                    <th style="width: 5%;">ID</th>
+                    <th style="width: 25%;">Детали</th>
+                </tr>
+            </thead>
+            <tbody>
+                {# Сюда будет выводиться список логов #}
+                <tr>
+                    <td colspan="7" class="text-center">Записи отсутствуют.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
