@@ -1,9 +1,30 @@
 # app/organizations/routes.py
-from flask import render_template, request, redirect, url_for, flash
+import os
+import shutil
+import uuid
+import io
+import re
+from flask import render_template, request, redirect, url_for, flash, current_app, jsonify, send_file
+from werkzeug.utils import secure_filename
 from app.models import Organization, GenericDirectoryItem
 from app.extensions import db
 from app.utils import permission_required_manual, log_user_activity, geocode_location
 from . import organizations_bp
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def get_files_for_org(org_id, subfolder):
+    file_urls = []
+    upload_folder = os.path.join(current_app.static_folder, 'uploads', 'organizations', str(org_id), subfolder)
+    
+    if os.path.exists(upload_folder):
+        for filename in sorted(os.listdir(upload_folder)):
+            if '.' in filename:
+                file_urls.append(url_for('static', filename=f'uploads/organizations/{org_id}/{subfolder}/{filename}'))
+    return file_urls
 
 @organizations_bp.route('/')
 @permission_required_manual('view_organizations')
