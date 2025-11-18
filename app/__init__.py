@@ -2,12 +2,15 @@
 from flask import Flask
 from .config import Config
 from .extensions import db, migrate
-
 from .utils import USER_GROUPS, get_current_user_obj, check_user_permission
+import jinja2
 
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
+
+    # Включение расширения 'do' для Jinja2
+    app.jinja_env.add_extension('jinja2.ext.do')
     
     # Инициализация расширений
     db.init_app(app)
