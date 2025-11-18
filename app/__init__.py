@@ -31,6 +31,8 @@ def create_app(config_class=Config):
     app.register_blueprint(groups_bp, url_prefix='/groups')
     from .generic_directory import generic_directory_bp
     app.register_blueprint(generic_directory_bp, url_prefix='/generic-directories')
+    from .map import map_bp
+    app.register_blueprint(map_bp, url_prefix='/map')
 
 
     @app.context_processor
