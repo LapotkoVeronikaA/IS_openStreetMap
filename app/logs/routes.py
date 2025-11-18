@@ -1,5 +1,5 @@
 # app/logs/routes.py
-from flask import render_template, request # Убрал flash, redirect, url_for, если они не нужны здесь
+from flask import render_template, request
 from app.models import UserActivity
 from app.utils import permission_required_manual
 from . import logs_bp
@@ -10,7 +10,7 @@ from datetime import datetime # для преобразования дат
 @permission_required_manual('view_logs')
 def view_logs():
     page = request.args.get('page', 1, type=int)
-    per_page = 25 # Можно сделать меньше для отображения с деталями
+    per_page = 25
 
     query = UserActivity.query
 
