@@ -11,22 +11,177 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='leaflet.css') }}" />
 
 <style>
+    /* Основной контейнер, занимающий всю высоту */
+    .map-main-container {
+        height: 80vh;
+        width: 100%;
+    }
+
+    /* Колонки и карта */
+    .map-row {
+        transition: all 0.3s ease-in-out;
+    }
+    #map-column, #map {
+        height: 100%;
+    }
+    
     #map {
-        height: 75vh;
         border-radius: 8px;
         box-shadow: 0 0 10px rgba(0,0,0,0.15);
+    }
+    
+    /* Информационная панель */
+    #info-panel {
+        height: 100%;
+        background-color: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    #info-panel-header {
+        padding: 0.75rem 1.25rem;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        flex-shrink: 0;
+    }
+    #info-panel-title {
+        margin-bottom: 0;
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+    #info-panel-body {
+        padding: 1.25rem;
+        overflow-y: auto;
+        flex-grow: 1;
+    }
+    .info-group {
+        margin-bottom: 1.25rem;
+    }
+    .info-group h6 {
+        font-weight: bold;
+        color: #0d6efd;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #eee;
+    }
+    .info-group p {
+        margin-bottom: 0.5rem;
+    }
+    .info-group strong {
+        color: #555;
+    }
+    .info-group ul {
+        padding-left: 1.2rem;
+        list-style-type: none;
+    }
+    .info-group ul li {
+        margin-bottom: 0.5rem;
+    }
+    .info-photos img {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        cursor: pointer;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .info-photos img:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    /* Стили для нового поиска */
+    #search-wrapper {
+        position: relative;
+        z-index: 990;
+    }
+    #search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 300px;
+        overflow-y: auto;
+        background-color: #fff;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 .375rem .375rem;
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+    }
+    #search-results .list-group-item {
+        cursor: pointer;
+    }
+    #search-results .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .legend { padding: 6px 10px; font: 14px/16px Arial, Helvetica, sans-serif; background: rgba(255,255,255,0.85); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; line-height: 24px; }
+    .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.7; }
+
+    /* Стили для панели фильтров */
+    #filters-panel {
+        height: 100%;
+        background-color: #f8f9fa;
+        border-left: 1px solid #dee2e6;
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="card-modern p-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
         <h2 class="h4 mb-0">
             <i class="fas fa-map-marked-alt me-3"></i>Интерактивная карта организаций
         </h2>
+        
+        <div class="d-flex align-items-center gap-2">
+            <div id="search-wrapper" class="flex-grow-1" style="min-width: 300px;">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" id="map-search-input" class="form-control" placeholder="Поиск по названию или адресу...">
+                </div>
+                <div id="search-results" class="list-group" style="display: none;"></div>
+            </div>
+            <button class="btn btn-primary" type="button" id="toggle-filters-btn">
+                <i class="fas fa-filter me-2"></i>Фильтры
+            </button>
+        </div>
     </div>
-    <div id="map"></div>
+
+    <div class="map-main-container">
+        <div class="row h-100 map-row">
+            <div class="col-md-12 h-100" id="map-column">
+                <div id="map"></div>
+            </div>
+
+            <div class="col-md-3 h-100 d-none" id="filters-panel">
+                <div class="p-3">
+                    <h5 class="mb-3">Фильтры</h5>
+                    <div class="mb-3">
+                        <label for="type-filter" class="form-label">Тип организации</label>
+                        <select id="type-filter" class="form-select form-select-sm">
+                            <option value="all">Все типы</option>
+                            {% for type in org_types %}
+                            <option value="{{ type }}">{{ type }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button id="reset-filters-btn" class="btn btn-sm btn-outline-secondary w-100">Сбросить фильтры</button>
+                </div>
+            </div>
+
+            <div class="col-md-4 h-100 d-none" id="info-panel-column">
+                <div id="info-panel">
+                    <div id="info-panel-header" class="d-flex justify-content-between align-items-center">
+                        <h5 id="info-panel-title">Информация об организации</h5>
+                        <button type="button" class="btn-close" id="info-panel-close-btn" title="Закрыть"></button>
+                    </div>
+                    <div id="info-panel-body"></div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="text-center text-muted small mt-2">
         © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors
     </div>
@@ -40,6 +195,20 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const userPermissions = {{ user_perms|tojson }};
+        
+        const mapColumn = document.getElementById('map-column');
+        const infoPanelColumn = document.getElementById('info-panel-column');
+        const infoPanelTitle = document.getElementById('info-panel-title');
+        const infoPanelBody = document.getElementById('info-panel-body');
+        const infoPanelCloseBtn = document.getElementById('info-panel-close-btn');
+        const searchInput = document.getElementById('map-search-input');
+        const searchResults = document.getElementById('search-results');
+        
+        // Элементы фильтров
+        const filtersPanel = document.getElementById('filters-panel');
+        const toggleFiltersBtn = document.getElementById('toggle-filters-btn');
+        const typeFilter = document.getElementById('type-filter');
+        const resetFiltersBtn = document.getElementById('reset-filters-btn');
 
         const defaultIcon = new L.Icon({
             iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
@@ -53,19 +222,71 @@
         var markersData = {{ markers_data|tojson }};
         var markersLayer = new L.FeatureGroup(); 
         
+        // Функция для создания HTML-содержимого для всплывающего окна (popup)
         function buildPopupHtml(details) {
             return `
                 <div class="fw-bold">${details.name}</div>
                 <div class="text-muted small">${details.location}</div>
                 <hr class="my-1">
-                <a href="${details.view_url}" class="btn btn-primary btn-sm mt-2">Подробнее</a>
+                <div class="d-flex justify-content-between">
+                    <small><i class="fas fa-sitemap fa-fw me-1"></i>Отделов: <strong>${details.departments.length}</strong></small>
+                    <small><i class="fas fa-users fa-fw me-1"></i>Сотрудников: <strong>${details.total_employees}</strong></small>
+                </div>
             `;
         }
 
+        // Функция для создания HTML-содержимого для боковой панели
+        function buildPanelHtml(details) {
+            let departmentsHtml = details.departments && details.departments.length > 0 ? `<div class="info-group"><h6><i class="fas fa-building me-2"></i>Отделы</h6><ul>${details.departments.map(d => `<li><strong>${d.faculty || '-'} / ${d.department || '-'}:</strong> ${d.employee_count} чел.</li>`).join('')}</ul></div>` : '';
+            let contactsHtml = details.contacts && details.contacts.length > 0 ? `<div class="info-group"><h6><i class="fas fa-users me-2"></i>Контакты</h6><ul>${details.contacts.map(c => `<li><strong>${c.full_name}</strong> (${c.position || '-'})<br><small><i class="fas fa-phone fa-fw"></i> ${c.phone || '-'}</small></li>`).join('')}</ul></div>` : '';
+            
+            let buttons = [];
+            buttons.push(`<a href="${details.view_url}" class="btn btn-sm btn-info"><i class="fas fa-eye me-2"></i>Подробнее</a>`);
+            if (userPermissions.can_manage_organizations) {
+                buttons.push(`<a href="${details.edit_url}" class="btn btn-sm btn-primary" target="_blank"><i class="fas fa-edit me-2"></i>Редактировать</a>`);
+            }
+            if(details.website) {
+                buttons.push(`<a href="${details.website}" class="btn btn-sm btn-outline-secondary" target="_blank"><i class="fas fa-globe me-2"></i>Веб-сайт</a>`);
+            }
+
+            return `
+                <div class="info-group">
+                    <h6><i class="fas fa-info-circle me-2"></i>Основная информация</h6>
+                    <p><strong>Тип:</strong> ${details.org_type}</p>
+                    <p><strong>Юр. название:</strong> ${details.legal_name}</p>
+                    <p><strong>Руководитель:</strong> ${details.head_of_organization}</p>
+                    <p><strong>Телефон:</strong> ${details.main_phone}</p>
+                    <p><strong>Email:</strong> ${details.main_email}</p>
+                </div>
+                ${departmentsHtml}
+                ${contactsHtml}
+                <div class="d-flex flex-wrap gap-2 mt-4">${buttons.join('')}</div>
+            `;
+        }
+
+        function togglePanel(show) {
+            mapColumn.className = `h-100 col-md-${show ? '8' : '12'}`;
+            infoPanelColumn.classList.toggle('d-none', !show);
+            filtersPanel.classList.add('d-none'); // Всегда скрываем фильтры при открытии панели
+            window.setTimeout(() => map.invalidateSize(), 300);
+        }
+
+        function toggleFiltersPanel(show) {
+            mapColumn.className = `h-100 col-md-${show ? '9' : '12'}`;
+            filtersPanel.classList.toggle('d-none', !show);
+            infoPanelColumn.classList.add('d-none'); // Всегда скрываем инфо-панель
+            window.setTimeout(() => map.invalidateSize(), 300);
+        }
+        
         markersData.forEach(org => {
             var marker = L.marker([org.lat, org.lon], { icon: defaultIcon, markerData: org });
-            marker.bindPopup(buildPopupHtml(org.details), { minWidth: 200 });
+            marker.bindPopup(buildPopupHtml(org.details), { minWidth: 280 });
             marker.bindTooltip(org.name);
+            marker.on('click', () => {
+                infoPanelTitle.textContent = org.details.name;
+                infoPanelBody.innerHTML = buildPanelHtml(org.details);
+                togglePanel(true);
+            });
             markersLayer.addLayer(marker);
         });
 
@@ -73,6 +294,59 @@
         if (Object.keys(markersLayer.getLayers()).length > 0) {
             map.fitBounds(markersLayer.getBounds().pad(0.1));
         }
+
+        infoPanelCloseBtn.addEventListener('click', () => togglePanel(false));
+        toggleFiltersBtn.addEventListener('click', () => toggleFiltersPanel(filtersPanel.classList.contains('d-none')));
+
+        searchInput.addEventListener('input', e => {
+            const query = e.target.value.trim().toLowerCase();
+            searchResults.innerHTML = '';
+            if (query.length < 2) { searchResults.style.display = 'none'; return; }
+            const filtered = markersData.filter(m => m.name.toLowerCase().includes(query) || m.details.location.toLowerCase().includes(query));
+            if (filtered.length > 0) {
+                filtered.slice(0, 10).forEach(markerData => {
+                    const item = document.createElement('a');
+                    item.className = 'list-group-item list-group-item-action';
+                    item.innerHTML = `${markerData.name} <small class="text-muted d-block">${markerData.details.location}</small>`;
+                    item.addEventListener('click', evt => {
+                        evt.preventDefault();
+                        map.setView([markerData.lat, markerData.lon], 17);
+                        markersLayer.eachLayer(layer => {
+                            if (layer.options.markerData.id === markerData.id) {
+                                layer.openPopup();
+                                infoPanelTitle.textContent = markerData.details.name;
+                                infoPanelBody.innerHTML = buildPanelHtml(markerData.details);
+                                togglePanel(true);
+                            }
+                        });
+                        searchInput.value = '';
+                        searchResults.style.display = 'none';
+                    });
+                    searchResults.appendChild(item);
+                });
+                searchResults.style.display = 'block';
+            } else { searchResults.style.display = 'none'; }
+        });
+        
+        searchInput.addEventListener('focusout', () => setTimeout(() => { searchResults.style.display = 'none'; }, 200));
+
+        function applyFilters() {
+            const selectedType = typeFilter.value;
+
+            markersLayer.eachLayer(layer => {
+                const data = layer.options.markerData.filter_data;
+                let visible = true;
+                if (selectedType !== 'all' && data.org_type !== selectedType) { visible = false; }
+                if (visible) { map.addLayer(layer); } else { map.removeLayer(layer); }
+            });
+        }
+        
+        typeFilter.addEventListener('change', applyFilters);
+
+        resetFiltersBtn.addEventListener('click', () => {
+            typeFilter.value = 'all';
+            applyFilters();
+        });
     });
 </script>
 {% endblock %}
