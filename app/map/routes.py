@@ -45,6 +45,8 @@ def show_map():
                 'total_employees': org.total_employee_count,
                 'departments': org.get_departments(),
                 'contacts': org.get_contacts(),
+                'photos': get_files_for_org(org.id, 'photos'),
+                'floor_plans': get_files_for_org(org.id, 'floor_plans'),
                 'edit_url': url_for('organizations.edit_org', org_id=org.id),
                 'view_url': url_for('organizations.view_org', org_id=org.id)
             }

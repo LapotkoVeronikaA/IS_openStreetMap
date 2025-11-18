@@ -31,12 +31,15 @@ def get_files_for_org(org_id, subfolder):
 def index():
     orgs = Organization.query.order_by(Organization.name).all()
     return render_template('organizations_index.html', organizations=orgs)
-    
+
 @organizations_bp.route('/<int:org_id>')
 @permission_required_manual('view_organizations')
 def view_org(org_id):
     org = Organization.query.get_or_404(org_id)
-    return render_template('organization_public_view.html', org=org)
+    photos = get_files_for_org(org_id, 'photos')
+    floor_plans = get_files_for_org(org_id, 'floor_plans')
+    return render_template('organization_public_view.html', org=org, photos=photos, floor_plans=floor_plans)
+
 
 @organizations_bp.route('/add', methods=['GET', 'POST'])
 @permission_required_manual('manage_organizations')
@@ -49,7 +52,7 @@ def add_org():
         location_str = request.form.get('location')
         if not request.form.get('name') or not location_str:
             flash('Поля "Название" и "Адрес" являются обязательными.', 'danger')
-            return render_template('organization_form.html', org=None, form_data=request.form, faculty_names=faculty_names, department_names=department_names, organization_types=organization_types)
+            return render_template('organization_form.html', org=None, form_data=request.form, photos=[], floor_plans=[], faculty_names=faculty_names, department_names=department_names, organization_types=organization_types)
 
         lat, lon = geocode_location(location_str)
 
@@ -69,15 +72,25 @@ def add_org():
         
         new_org.set_contacts([{"full_name": n, "position": p, "phone": ph} for n, p, ph in zip(request.form.getlist('contact_full_name'), request.form.getlist('contact_position'), request.form.getlist('contact_phone')) if n.strip()])
         new_org.set_departments([{"faculty": f, "department": d, "employee_count": c} for f, d, c in zip(request.form.getlist('department_faculty'), request.form.getlist('department_name'), request.form.getlist('department_employee_count')) if f.strip() or d.strip()])
-        
+
         db.session.add(new_org)
         db.session.commit()
+
+        for subfolder, file_list in [('photos', request.files.getlist('photos')), ('floor_plans', request.files.getlist('floor_plans'))]:
+            if file_list and file_list[0].filename:
+                upload_folder = os.path.join(current_app.static_folder, 'uploads', 'organizations', str(new_org.id), subfolder)
+                os.makedirs(upload_folder, exist_ok=True)
+                for file in file_list:
+                    if file and allowed_file(file.filename):
+                        ext = file.filename.rsplit('.', 1)[1].lower()
+                        filename = f"{uuid.uuid4()}.{ext}"
+                        file.save(os.path.join(upload_folder, filename))
         
         log_user_activity(f"Добавлена организация: {new_org.name}", "Organization", new_org.id)
         flash('Организация успешно добавлена.', 'success')
         return redirect(url_for('organizations.index'))
             
-    return render_template('organization_form.html', org=None, form_data={}, faculty_names=faculty_names, department_names=department_names, organization_types=organization_types)
+    return render_template('organization_form.html', org=None, form_data={}, photos=[], floor_plans=[], faculty_names=faculty_names, department_names=department_names, organization_types=organization_types)
 
 
 @organizations_bp.route('/edit/<int:org_id>', methods=['GET', 'POST'])
@@ -92,7 +105,7 @@ def edit_org(org_id):
         new_location_str = request.form.get('location')
         if not request.form.get('name') or not new_location_str:
             flash('Поля "Название" и "Адрес" являются обязательными.', 'danger')
-            return render_template('organization_form.html', org=org, faculty_names=faculty_names, department_names=department_names, organization_types=organization_types)
+            return render_template('organization_form.html', org=org, photos=get_files_for_org(org_id, 'photos'), floor_plans=get_files_for_org(org_id, 'floor_plans'), faculty_names=faculty_names, department_names=department_names, organization_types=organization_types)
 
         if org.location != new_location_str:
             lat, lon = geocode_location(new_location_str)
@@ -111,10 +124,60 @@ def edit_org(org_id):
         
         org.set_contacts([{"full_name": n, "position": p, "phone": ph} for n, p, ph in zip(request.form.getlist('contact_full_name'), request.form.getlist('contact_position'), request.form.getlist('contact_phone')) if n.strip()])
         org.set_departments([{"faculty": f, "department": d, "employee_count": c} for f, d, c in zip(request.form.getlist('department_faculty'), request.form.getlist('department_name'), request.form.getlist('department_employee_count')) if f.strip() or d.strip()])
+
+        for subfolder, file_list in [('photos', request.files.getlist('photos')), ('floor_plans', request.files.getlist('floor_plans'))]:
+            if file_list and file_list[0].filename:
+                upload_folder = os.path.join(current_app.static_folder, 'uploads', 'organizations', str(org_id), subfolder)
+                os.makedirs(upload_folder, exist_ok=True)
+                for file in file_list:
+                    if file and allowed_file(file.filename):
+                        ext = file.filename.rsplit('.', 1)[1].lower()
+                        filename = f"{uuid.uuid4()}.{ext}"
+                        file.save(os.path.join(upload_folder, filename))
         
         db.session.commit()
         log_user_activity(f"Отредактирована организация: {org.name}", "Organization", org.id)
         flash('Организация успешно обновлена.', 'success')
-        return redirect(url_for('organizations.view_org', org_id=org.id))
+        return redirect(url_for('organizations.index'))
             
-    return render_template('organization_form.html', org=org, form_data=org, faculty_names=faculty_names, department_names=department_names, organization_types=organization_types)
+    photos = get_files_for_org(org_id, 'photos')
+    floor_plans = get_files_for_org(org_id, 'floor_plans')
+    return render_template('organization_form.html', org=org, form_data=org, photos=photos, floor_plans=floor_plans, faculty_names=faculty_names, department_names=department_names, organization_types=organization_types)
+
+
+@organizations_bp.route('/delete_file/<int:org_id>/<string:subfolder>/<string:filename>', methods=['POST'])
+@permission_required_manual('manage_organizations')
+def delete_file(org_id, subfolder, filename):
+    if subfolder not in ['photos', 'floor_plans']:
+        return jsonify({'success': False, 'message': 'Неверный тип файла.'}), 400
+
+    filename = secure_filename(filename)
+    file_path = os.path.join(current_app.static_folder, 'uploads', 'organizations', str(org_id), subfolder, filename)
+    
+    if os.path.exists(file_path):
+        try:
+            org = Organization.query.get_or_404(org_id)
+            os.remove(file_path)
+            log_user_activity(f"Удален файл '{filename}' для организации: {org.name}", "Organization", org_id)
+            return jsonify({'success': True, 'message': 'Файл удален.'})
+        except Exception as e:
+            current_app.logger.error(f"Ошибка удаления файла {file_path}: {e}")
+            return jsonify({'success': False, 'message': 'Ошибка при удалении файла.'}), 500
+    else:
+        return jsonify({'success': False, 'message': 'Файл не найден.'}), 404
+
+@organizations_bp.route('/delete/<int:org_id>', methods=['POST'])
+@permission_required_manual('manage_organizations')
+def delete_org(org_id):
+    org = Organization.query.get_or_404(org_id)
+    org_name_deleted = org.name
+    
+    upload_folder = os.path.join(current_app.static_folder, 'uploads', 'organizations', str(org_id))
+    if os.path.exists(upload_folder):
+        shutil.rmtree(upload_folder)
+
+    db.session.delete(org)
+    db.session.commit()
+    log_user_activity(f"Удалена организация: {org_name_deleted}", "Organization", org_id)
+    flash('Организация успешно удалена.', 'success')
+    return redirect(url_for('organizations.index'))

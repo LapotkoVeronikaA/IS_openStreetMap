@@ -23,7 +23,7 @@
     </div>
 
     <div class="row g-4">
-        <div class="col-lg-12">
+        <div class="col-lg-8">
             <!-- Основная информация -->
             <div class="card-modern p-3 mb-4">
                 <h3 class="h5 mb-3 border-bottom pb-2">Основная информация</h3>
@@ -36,6 +36,52 @@
                     <div class="col-md-6 mb-3"><strong class="d-block text-muted">Email</strong><a href="mailto:{{ org.main_email }}">{{ org.main_email or '-' }}</a></div>
                 </div>
                 {% if org.notes %}<hr><p class="mb-0"><strong>Заметки:</strong> {{ org.notes }}</p>{% endif %}
+            </div>
+
+            <!-- Фотографии -->
+            {% if photos %}
+            <div class="card-modern p-3 mb-4">
+                <h3 class="h5 mb-3 border-bottom pb-2">Фотографии</h3>
+                <div class="row g-2">
+                    {% for photo_url in photos %}
+                    <div class="col-md-4">
+                        <a href="{{ photo_url }}" target="_blank">
+                            <img src="{{ photo_url }}" class="img-thumbnail" style="height: 150px; width: 100%; object-fit: cover;">
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+        <div class="col-lg-4">
+            <!-- Отделы -->
+            <div class="card-modern p-3 mb-4">
+                <h3 class="h5 mb-3 border-bottom pb-2">Структура ({{ org.total_employee_count }} чел.)</h3>
+                {% if org.get_departments() %}
+                <ul class="list-unstyled">
+                    {% for dept in org.get_departments() %}
+                    <li><i class="fas fa-chevron-right fa-fw text-muted me-1"></i><strong>{{ dept.faculty }}:</strong> {{ dept.department }} ({{ dept.employee_count }} чел.)</li>
+                    {% endfor %}
+                </ul>
+                {% else %}<p class="text-muted">Нет данных.</p>{% endif %}
+            </div>
+
+            <!-- Контакты -->
+            <div class="card-modern p-3">
+                 <h3 class="h5 mb-3 border-bottom pb-2">Контакты</h3>
+                {% if org.get_contacts() %}
+                <ul class="list-unstyled">
+                    {% for contact in org.get_contacts() %}
+                    <li class="mb-2">
+                        <strong>{{ contact.full_name }}</strong><br>
+                        <small class="text-muted">{{ contact.position }}</small><br>
+                        <small><i class="fas fa-phone fa-fw"></i> {{ contact.phone }}</small>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}<p class="text-muted">Нет данных.</p>{% endif %}
             </div>
         </div>
     </div>

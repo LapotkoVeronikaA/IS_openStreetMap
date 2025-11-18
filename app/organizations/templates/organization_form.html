@@ -81,6 +81,30 @@
                 </div>
                 <button type="button" id="add-contact-btn" class="btn btn-outline-primary mt-2"><i class="fas fa-plus me-2"></i>Добавить контакт</button>
                 
+                <hr class="my-4">
+
+                <h5 class="mb-3">Фотографии</h5>
+                <div class="card bg-light p-3 mb-3">
+                    <div class="mb-3"><label for="photos" class="form-label">Добавить новые фото</label><input class="form-control" type="file" id="photos" name="photos" multiple accept="image/*"></div>
+                    {% if photos %}<div class="row g-2">
+                        {% for photo_url in photos %}<div class="col-md-4 position-relative">
+                            <img src="{{ photo_url }}" class="img-thumbnail" style="height: 150px; width: 100%; object-fit: cover;">
+                            <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 delete-file-btn" data-org-id="{{ org.id }}" data-subfolder="photos" data-filename="{{ photo_url.split('/')[-1] }}"><i class="fas fa-times"></i></button>
+                        </div>{% endfor %}
+                    </div>{% endif %}
+                </div>
+
+                <h5 class="mb-3">Планы этажей / Документы</h5>
+                <div class="card bg-light p-3">
+                    <div class="mb-3"><label for="floor_plans" class="form-label">Добавить новые файлы</label><input class="form-control" type="file" id="floor_plans" name="floor_plans" multiple accept="image/*,application/pdf"></div>
+                    {% if floor_plans %}<div class="list-group">
+                        {% for plan_url in floor_plans %}<div class="list-group-item d-flex justify-content-between align-items-center">
+                            <a href="{{ plan_url }}" target="_blank"><i class="fas fa-file-alt me-2"></i>{{ plan_url.split('/')[-1] }}</a>
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-file-btn" data-org-id="{{ org.id }}" data-subfolder="floor_plans" data-filename="{{ plan_url.split('/')[-1] }}"><i class="fas fa-times"></i></button>
+                        </div>{% endfor %}
+                    </div>{% endif %}
+                </div>
+
                 <div class="my-4"><label class="form-label">Заметки</label><textarea name="notes" class="form-control" rows="3">{{ form_data.notes or '' }}</textarea></div>
 
                 <div class="d-flex justify-content-end gap-2 mt-4">
@@ -142,7 +166,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     setupDynamicList('departments-container', 'add-department-btn', 'department-template', '.department-group', '.remove-department-btn');
     setupDynamicList('contacts-container', 'add-contact-btn', 'contact-template', '.contact-group', '.remove-contact-btn');
+
+    document.querySelectorAll('.delete-file-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const orgId = this.dataset.orgId;
+            const subfolder = this.dataset.subfolder;
+            const filename = this.dataset.filename;
+            const elementToRemove = this.closest('.col-md-4, .list-group-item');
+            if (confirm(`Удалить файл "${filename}"?`)) {
+                fetch(`/organizations/delete_file/${orgId}/${subfolder}/${filename}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => { if (data.success) { elementToRemove.remove(); } else { alert('Ошибка: ' + data.message); } })
+                .catch(error => alert('Произошла сетевая ошибка.'));
+            }
+        });
+    });
 });
 </script>
 {% endblock %}
-```--- END OF FILE app/organizations/templates/organization_form.html ---
