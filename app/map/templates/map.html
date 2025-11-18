@@ -237,6 +237,9 @@
 
         // Функция для создания HTML-содержимого для боковой панели
         function buildPanelHtml(details) {
+            let photosHtml = details.photos && details.photos.length > 0 ? `<div class="info-group info-photos"><h6><i class="fas fa-camera me-2"></i>Фотографии</h6><div class="row g-2">${details.photos.map(url => `<div class="col-6"><a href="${url}" target="_blank"><img src="${url}" class="img-fluid rounded"></a></div>`).join('')}</div></div>` : '';
+            let floorPlansHtml = details.floor_plans && details.floor_plans.length > 0 ? `<div class="info-group info-photos"><h6><i class="fas fa-drafting-compass me-2"></i>Планы / Документы</h6><div class="row g-2">${details.floor_plans.map(url => { const isImage = /\.(jpe?g|png|gif)$/i.test(url); const filename = url.split('/').pop(); if (isImage) { return `<div class="col-6"><a href="${url}" target="_blank" title="${filename}"><img src="${url}" class="img-fluid rounded"></a></div>`; } else { return `<div class="col-12"><a href="${url}" target="_blank" class="list-group-item list-group-item-action"><i class="fas fa-file-pdf me-2"></i>${filename}</a></div>`; } }).join('')}</div></div>` : '';
+            
             let departmentsHtml = details.departments && details.departments.length > 0 ? `<div class="info-group"><h6><i class="fas fa-building me-2"></i>Отделы</h6><ul>${details.departments.map(d => `<li><strong>${d.faculty || '-'} / ${d.department || '-'}:</strong> ${d.employee_count} чел.</li>`).join('')}</ul></div>` : '';
             let contactsHtml = details.contacts && details.contacts.length > 0 ? `<div class="info-group"><h6><i class="fas fa-users me-2"></i>Контакты</h6><ul>${details.contacts.map(c => `<li><strong>${c.full_name}</strong> (${c.position || '-'})<br><small><i class="fas fa-phone fa-fw"></i> ${c.phone || '-'}</small></li>`).join('')}</ul></div>` : '';
             
@@ -260,6 +263,8 @@
                 </div>
                 ${departmentsHtml}
                 ${contactsHtml}
+                ${photosHtml}
+                ${floorPlansHtml}
                 <div class="d-flex flex-wrap gap-2 mt-4">${buttons.join('')}</div>
             `;
         }
