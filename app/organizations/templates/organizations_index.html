@@ -52,7 +52,7 @@
                                data-bs-toggle="tooltip" title="Редактировать">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <form action="#" method="POST" class="d-inline">
+                            <form action="{{ url_for('organizations.delete_org', org_id=org.id) }}" method="POST" class="d-inline">
                                 <button type="submit" 
                                         class="btn btn-sm btn-outline-danger"
                                         data-bs-toggle="tooltip" title="Удалить"
