@@ -16,6 +16,7 @@ USER_GROUPS = {
             'view_organizations': True, 
             'manage_organizations': True,
             'view_map': True,
+            'manage_news': True,
         }
     },
     'guest': {
@@ -24,6 +25,23 @@ USER_GROUPS = {
         'permissions': {
              'view_map': True,
              'view_organizations': True,
+        }
+    },
+    'org_manager': {
+        'name': 'Менеджер реестра',
+        'is_deletable': True,
+        'permissions': {
+            'view_organizations': True,
+            'manage_organizations': True,
+            'view_map': True,
+        }
+    },
+    'viewer': {
+        'name': 'Просмотр',
+        'is_deletable': True,
+        'permissions': {
+            'view_organizations': True,
+            'view_map': True,
         }
     }
 }

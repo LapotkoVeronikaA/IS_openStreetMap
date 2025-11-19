@@ -55,24 +55,34 @@ def create_app(config_class=Config):
             
             admin_group = Group.query.filter_by(name='Администратор').first()
             if not admin_group:
-                print("Группа 'Администратор' не найдена. Запустите 'flask seed-permissions' для первоначального заполнения.")
+                print("Группа 'Администратор' не найдена. Пожалуйста, сначала запустите 'flask seed-permissions'.")
                 return
             
-            admin = User(username='admin', password='admin', group_id=admin_group.id, full_name='Администратор системы')
+            admin_password = 'admin'
+            
+            admin = User(
+                username='admin',
+                password=admin_password, 
+                group_id=admin_group.id,
+                full_name='Администратор системы',
+                position='Администратор'
+            )
             db.session.add(admin)
             db.session.commit()
             print("Пользователь admin создан.")
 
     @app.cli.command("seed-permissions")
     def seed_permissions_command():
-        """Создает и/или обновляет группы и права на основе словаря USER_GROUPS."""
+        """
+        Создает и/или обновляет группы и права на основе словаря USER_GROUPS.
+        Безопасна для повторного запуска.
+        """
         from .models import Group, Permission
         from .utils import USER_GROUPS 
 
         with app.app_context():
             print("Синхронизация групп и прав...")
             
-            # Шаг 1: Создание или обновление групп
             group_objects = {}
             for group_key, group_info in USER_GROUPS.items():
                 group_obj = Group.query.filter_by(name=group_info['name']).first()
@@ -82,22 +92,26 @@ def create_app(config_class=Config):
                         is_deletable=group_info.get('is_deletable', True)
                     )
                     db.session.add(group_obj)
+                else:
+                    group_obj.is_deletable = group_info.get('is_deletable', True)
                 group_objects[group_info['name']] = group_obj
             db.session.commit()
             print(f"Найдено/создано {len(group_objects)} групп.")
 
-            # Шаг 2: Сбор и создание всех возможных прав
             all_permission_names = set()
             for group_info in USER_GROUPS.values():
                 for perm in group_info['permissions']:
                     all_permission_names.add(perm)
+            all_permission_names.add('manage_groups')
 
             permission_descriptions = {
                 'view_logs': 'Просматривать журнал действий',
                 'manage_users': 'Управлять пользователями',
+                'manage_groups': 'Управлять группами и правами доступа',
                 'view_organizations': 'Просматривать реестр организаций',
                 'manage_organizations': 'Управлять реестром организаций',
                 'view_map': 'Просматривать интерактивную карту',
+                'manage_news': 'Управлять новостями',
             }
 
             permission_objects = {}
@@ -109,24 +123,39 @@ def create_app(config_class=Config):
                         description=permission_descriptions.get(perm_name, 'Нет описания')
                     )
                     db.session.add(perm_obj)
+                elif perm_obj.description != permission_descriptions.get(perm_name, 'Нет описания'):
+                    perm_obj.description = permission_descriptions.get(perm_name, 'Нет описания')
+
                 permission_objects[perm_name] = perm_obj
             db.session.commit()
-            print(f"Найдено/создано {len(permission_objects)} прав.")
+            print(f"Найдено/создано/обновлено {len(permission_objects)} прав.")
 
-            # Шаг 3: Назначение прав группам
+            if 'admin' in USER_GROUPS and 'permissions' in USER_GROUPS['admin']:
+                USER_GROUPS['admin']['permissions']['manage_groups'] = True
+            
             for group_name, group_obj in group_objects.items():
                 group_key = next((key for key, info in USER_GROUPS.items() if info['name'] == group_name), None)
                 if group_key:
                     group_info = USER_GROUPS[group_key]
                     
-                    # Очищаем старые права и добавляем новые
                     group_obj.permissions.clear()
                     for perm_name, has_perm in group_info.get('permissions', {}).items():
                         if has_perm and perm_name in permission_objects:
                             group_obj.permissions.append(permission_objects[perm_name])
             
             db.session.commit()
-            print("Права успешно назначены группам.")
+
+            print("Поиск устаревших прав...")
+            db_permissions = Permission.query.all()
+            for perm in db_permissions:
+                if perm.name not in all_permission_names:
+                    print(f"  - Найдено устаревшее право: '{perm.name}'. Удаление...")
+                    for group in perm.groups:
+                        group.permissions.remove(perm)
+                    db.session.commit()
+                    db.session.delete(perm)
+            db.session.commit()
+
             print("Синхронизация завершена.")
 
     return app
