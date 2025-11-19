@@ -16,7 +16,7 @@ class Group(db.Model):
     is_deletable = db.Column(db.Boolean, nullable=False, default=True) 
     users = db.relationship('User', back_populates='group')
     permissions = db.relationship('Permission', secondary=group_permissions, lazy='subquery',
-                                backref=db.backref('groups', lazy=True))
+                                   backref=db.backref('groups', lazy=True))
     def __repr__(self):
         return f'<Group {self.name}>'
 
@@ -77,6 +77,7 @@ class Organization(db.Model):
     longitude = db.Column(db.Float, nullable=True)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+    events = db.relationship('Event', back_populates='organization', lazy='dynamic', cascade="all, delete-orphan")
     
     def set_contacts(self, contacts_list):
         if contacts_list: self.contacts = json.dumps(contacts_list, ensure_ascii=False)
@@ -134,3 +135,29 @@ class Feedback(db.Model):
     
     def __repr__(self):
         return f'<Feedback {self.subject}>'
+
+# --- НОВЫЕ МОДЕЛИ ---
+
+class News(db.Model):
+    __tablename__ = 'news'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # Автор новости
+    user = db.relationship('User')
+
+    def __repr__(self):
+        return f'<News {self.title}>'
+
+class Event(db.Model):
+    __tablename__ = 'events'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    event_date = db.Column(db.DateTime, nullable=False)
+    organization_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
+    organization = db.relationship('Organization', back_populates='events')
+
+    def __repr__(self):
+        return f'<Event {self.title}>'
