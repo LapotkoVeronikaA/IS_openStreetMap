@@ -33,6 +33,8 @@ def create_app(config_class=Config):
     app.register_blueprint(generic_directory_bp, url_prefix='/generic-directories')
     from .map import map_bp
     app.register_blueprint(map_bp, url_prefix='/map')
+    from .api import api_bp
+    app.register_blueprint(api_bp, url_prefix='/api')
 
 
     @app.context_processor
