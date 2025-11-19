@@ -119,3 +119,18 @@ class GenericDirectoryItem(db.Model):
 
     def __repr__(self):
         return f'<GenericDirectoryItem [{self.directory_type}] {self.name}>'
+
+class Feedback(db.Model):
+    __tablename__ = 'feedback'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    email = db.Column(db.String(150), nullable=False)
+    subject = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    is_read = db.Column(db.Boolean, default=False, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # Связь с пользователем, если он был авторизован
+    user = db.relationship('User')
+    
+    def __repr__(self):
+        return f'<Feedback {self.subject}>'

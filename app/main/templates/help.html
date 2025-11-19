@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Помощь{% endblock %}
+
+{% block breadcrumbs %}
+  {{ breadcrumbs([('Помощь', '#')]) }}
+{% endblock %}
+
+{% block content %}
+<div class="card-modern p-4 p-md-5">
+    <h2 class="h3 mb-4"><i class="fas fa-question-circle me-3"></i>Помощь и FAQ</h2>
+    
+    <div class="accordion" id="faqAccordion">
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOne">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+            Как найти нужную организацию?
+          </button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            Вы можете найти организацию несколькими способами:
+            <ul>
+                <li><strong>Через реестр:</strong> Перейдите в раздел "Реестр" и воспользуйтесь таблицей для просмотра всех записей.</li>
+                <li><strong>Через карту:</strong> Откройте "Интерактивную карту", найдите нужную метку и кликните по ней для получения информации.</li>
+                <li><strong>С помощью поиска:</strong> На странице карты вверху есть поле поиска, где можно ввести название или адрес организации.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingTwo">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+            У меня нет прав на редактирование. Что делать?
+          </button>
+        </h2>
+        <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            Права на редактирование и добавление информации выдаются администратором системы. Если вы считаете, что вам необходим доступ к этим функциям, пожалуйста, обратитесь к системному администратору вашего учреждения.
+          </div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingThree">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+            Информация об организации устарела. Как ее обновить?
+          </button>
+        </h2>
+        <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            Обновлять информацию могут только пользователи с правом `manage_organizations` (например, "Менеджер реестра" или "Администратор"). Если вы обладаете такими правами, вы можете найти нужную организацию в реестре и нажать кнопку "Редактировать". В противном случае, сообщите об устаревших данных ответственному лицу.
+          </div>
+        </div>
+      </div>
+    </div>
+
+</div>
+{% endblock %}
