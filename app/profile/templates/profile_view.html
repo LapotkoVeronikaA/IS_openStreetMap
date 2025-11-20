@@ -1,0 +1,39 @@
+{% extends "profile_base.html" %}
+
+{% set breadcrumbs_extra = [('Просмотр', '#')] %}
+
+{% block title %}Профиль: {{ user.username }}{% endblock %}
+
+{% block profile_content %}
+<div class="card-modern p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="h4 mb-1"><i class="fas fa-id-card me-3"></i>Профиль пользователя: {{ user.username }}</h2>
+            <p class="text-muted mb-0">{{ user.group.name if user.group else 'Группа не назначена' }}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <strong class="d-block text-muted">ФИО</strong>
+                {{ user.full_name or '-' }}
+            </div>
+            <div class="mb-3">
+                <strong class="d-block text-muted">Отдел</strong>
+                {{ user.department or '-' }}
+            </div>
+             <div class="mb-3">
+                <strong class="d-block text-muted">Должность</strong>
+                {{ user.position or '-' }}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <strong class="d-block text-muted">Контактная информация</strong>
+                {{ user.contact_info or '-' }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block breadcrumbs %}
+  {{ breadcrumbs([('Личный кабинет', url_for('profile.index'))] + (breadcrumbs_extra or [])) }}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-3">
+        <div class="card-modern p-3">
+            <div class="list-group">
+                <a href="{{ url_for('profile.view', user_id=user.id) }}" 
+                   class="list-group-item list-group-item-action {% if request.endpoint == 'profile.view' %}active{% endif %}">
+                   <i class="fas fa-user-circle fa-fw me-2"></i>Просмотр профиля
+                </a>
+                <a href="#" 
+                   class="list-group-item list-group-item-action {% if request.endpoint == 'profile.edit' %}active{% endif %}">
+                   <i class="fas fa-user-edit fa-fw me-2"></i>Редактировать профиль
+                </a>
+                <a href="#" 
+                   class="list-group-item list-group-item-action {% if request.endpoint == 'profile.my_activity' %}active{% endif %}">
+                   <i class="fas fa-history fa-fw me-2"></i>Мои действия
+                </a>
+                <a href="#"
+                   class="list-group-item list-group-item-action {% if request.endpoint == 'profile.my_feedback' %}active{% endif %}">
+                   <i class="fas fa-inbox fa-fw me-2"></i>Мои обращения
+                </a>
+                <a href="#" 
+                   class="list-group-item list-group-item-action {% if request.endpoint == 'profile.security' %}active{% endif %}">
+                   <i class="fas fa-shield-alt fa-fw me-2"></i>Безопасность
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-9">
+        {% block profile_content %}{% endblock %}
+    </div>
+</div>
+{% endblock %}
