@@ -4,10 +4,9 @@
         <a class="navbar-brand fw-bold" href="{{ url_for('main.dashboard') }}">
             <i class="fas fa-university me-2"></i>Реестр МУИВ
         </a>
-
+        
         <!-- Кнопка для мобильных -->
-        <button class="navbar-toggler" type="button" 
-                data-bs-toggle="collapse" data-bs-target="#mainNav">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
             <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -29,12 +28,12 @@
                         <i class="fas fa-map-marked-alt me-2"></i>Карта
                     </a>
                 </li>
-                 <li class="nav-item">
-                    <a class="nav-link" href="#">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('main.news_list') }}">
                         <i class="fas fa-newspaper me-2"></i>Новости
                     </a>
                 </li>
-                
+
                 {% if check_user_permission('manage_users') or check_user_permission('manage_groups') %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -42,23 +41,28 @@
                     </a>
                     <ul class="dropdown-menu">
                         {% if check_user_permission('manage_users') %}
-                        <li><a class="dropdown-item" href="{{ url_for('users.user_management') }}"><i class="fas fa-users-cog fa-fw me-2"></i>Пользователи</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for('main.view_feedback') }}"><i class="fas fa-inbox fa-fw me-2"></i>Обращения</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('users.user_management') }}"><i
+                                    class="fas fa-users-cog fa-fw me-2"></i>Пользователи</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('main.view_feedback') }}"><i
+                                    class="fas fa-inbox fa-fw me-2"></i>Обращения</a></li>
                         {% endif %}
                         {% if check_user_permission('manage_groups') %}
-                        <li><a class="dropdown-item" href="{{ url_for('groups.index') }}"><i class="fas fa-shield-alt fa-fw me-2"></i>Группы и права</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('groups.index') }}"><i
+                                    class="fas fa-shield-alt fa-fw me-2"></i>Группы и права</a></li>
                         {% endif %}
                         {% if check_user_permission('manage_organizations') %}
-                        <li><a class="dropdown-item" href="{{ url_for('generic_directory.index') }}"><i class="fas fa-book fa-fw me-2"></i>Справочники</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('generic_directory.index') }}"><i
+                                    class="fas fa-book fa-fw me-2"></i>Справочники</a></li>
                         {% endif %}
                         {% if check_user_permission('view_logs') %}
-                        <li><a class="dropdown-item" href="{{ url_for('logs.view_logs') }}"><i class="fas fa-clipboard-list fa-fw me-2"></i>Журнал действий</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('logs.view_logs') }}"><i
+                                    class="fas fa-clipboard-list fa-fw me-2"></i>Журнал действий</a></li>
                         {% endif %}
                     </ul>
                 </li>
                 {% endif %}
 
-                <!-- === НАЧАЛО ИЗМЕНЕНИЙ: Группировка информационных ссылок === -->
+                <!-- Группировка информационных ссылок === -->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-info-circle me-2"></i>Информация
@@ -81,39 +85,40 @@
                         </li>
                     </ul>
                 </li>
-                <!-- === КОНЕЦ ИЗМЕНЕНИЙ === -->
             </ul>
-            
+
             <ul class="navbar-nav ms-auto">
                 {% if current_user_obj() %}
-                    <!-- Меню пользователя -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" 
-                           href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle me-2"></i>
-                            {{ current_user_obj().username }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                             <li>
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-id-card fa-fw me-2"></i>Личный кабинет
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
-                                    <i class="fas fa-sign-out-alt me-2"></i>Выйти
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
+                <!-- Меню пользователя -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button"
+                        data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-2"></i>
+                        {{ current_user_obj().username }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="fas fa-id-card fa-fw me-2"></i>Личный кабинет
+                            </a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Выйти
+                            </a>
+                        </li>
+                    </ul>
+                </li>
                 {% else %}
-                    <!-- Гостевое меню -->
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.login') }}">
-                            <i class="fas fa-sign-in-alt me-2"></i>Войти
-                        </a>
-                    </li>
+                <!-- Гостевое меню -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('auth.login') }}">
+                        <i class="fas fa-sign-in-alt me-2"></i>Войти
+                    </a>
+                </li>
                 {% endif %}
             </ul>
         </div>
@@ -122,12 +127,12 @@
 
 {% if current_user_obj() %}
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    // Инициализируем все tooltip на странице
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
+    document.addEventListener('DOMContentLoaded', function () {
+        // Инициализируем все tooltip на странице
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
     });
-});
 </script>
 {% endif %}
