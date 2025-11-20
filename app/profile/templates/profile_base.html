@@ -13,7 +13,7 @@
                    class="list-group-item list-group-item-action {% if request.endpoint == 'profile.view' %}active{% endif %}">
                    <i class="fas fa-user-circle fa-fw me-2"></i>Просмотр профиля
                 </a>
-                <a href="#" 
+                <a href="{{ url_for('profile.edit', user_id=user.id) }}" 
                    class="list-group-item list-group-item-action {% if request.endpoint == 'profile.edit' %}active{% endif %}">
                    <i class="fas fa-user-edit fa-fw me-2"></i>Редактировать профиль
                 </a>
