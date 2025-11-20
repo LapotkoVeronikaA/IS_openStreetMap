@@ -113,6 +113,7 @@ def create_app(config_class=Config):
                 'view_organizations': 'Просматривать реестр организаций',
                 'manage_organizations': 'Управлять реестром организаций',
                 'view_map': 'Просматривать интерактивную карту',
+                'view_profile': 'Просматривать личный кабинет',
                 'manage_news': 'Управлять новостями',
             }
 

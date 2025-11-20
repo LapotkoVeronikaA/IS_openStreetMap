@@ -16,6 +16,7 @@ USER_GROUPS = {
             'view_organizations': True, 
             'manage_organizations': True,
             'view_map': True,
+            'view_profile': True,
             'manage_news': True,
         }
     },
@@ -34,6 +35,7 @@ USER_GROUPS = {
             'view_organizations': True,
             'manage_organizations': True,
             'view_map': True,
+            'view_profile': True,
         }
     },
     'viewer': {
@@ -42,6 +44,7 @@ USER_GROUPS = {
         'permissions': {
             'view_organizations': True,
             'view_map': True,
+            'view_profile': True,
         }
     }
 }
