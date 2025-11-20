@@ -35,6 +35,8 @@ def create_app(config_class=Config):
     app.register_blueprint(map_bp, url_prefix='/map')
     from .api import api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
+    from .profile import profile_bp
+    app.register_blueprint(profile_bp, url_prefix='/profile')
 
 
     @app.context_processor
