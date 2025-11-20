@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if news_item %}Редактирование новости{% else %}Создание новости{% endif %}
+{% endblock %}
+
+{% block breadcrumbs %}
+    {% if news_item %}
+        {{ breadcrumbs([('Новости', url_for('main.news_list')), ('Редактирование', '#')]) }}
+    {% else %}
+        {{ breadcrumbs([('Новости', url_for('main.news_list')), ('Создание', '#')]) }}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="card-modern p-4">
+    <h2 class="h3 mb-4">
+        <i class="fas fa-edit me-3"></i>
+        {% if news_item %}Редактирование новости{% else %}Создание новости{% endif %}
+    </h2>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="title" class="form-label">Заголовок</label>
+            <input type="text" class="form-control" id="title" name="title" 
+                   value="{{ news_item.title if news_item else form_data.title or '' }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="content" class="form-label">Содержание</label>
+            <textarea class="form-control" id="content" name="content" rows="10" required>{{ news_item.content if news_item else form_data.content or '' }}</textarea>
+        </div>
+        <div class="d-flex justify-content-end gap-2">
+            <a href="{{ url_for('main.news_list') }}" class="btn btn-outline-secondary">Отмена</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>Сохранить
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

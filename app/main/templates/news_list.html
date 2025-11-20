@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Помощь{% endblock %}
+
+{% block breadcrumbs %}
+  {{ breadcrumbs([('Помощь', '#')]) }}
+{% endblock %}
+
+{% block content %}
+<div class="card-modern p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0"><i class="fas fa-newspaper me-3"></i>Новости проекта</h2>
+        {% if check_user_permission('manage_news') %}
+        <a href="{{ url_for('main.add_news') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Добавить новость
+        </a>
+        {% endif %}
+    </div>
+    {% for item in news_items.items %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="card-title">{{ item.title }}</h4>
+            <h6 class="card-subtitle mb-2 text-muted">
+                Опубликовано: {{ item.created_at.strftime('%d.%m.%Y') }}
+                {% if item.user %} | Автор: {{ item.user.username }}{% endif %}
+            </h6>
+            <p class="card-text">{{ item.content|truncate(300) }}</p>
+            <a href="{{ url_for('main.view_news_item', news_id=item.id) }}" class="btn btn-primary">Читать далее</a>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">Новостей пока нет.</div>
+    {% endfor %}
+
+    <!-- Пагинация -->
+    {% if news_items.pages > 1 %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if not news_items.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('main.news_list', page=news_items.prev_num) }}">Назад</a>
+            </li>
+            {% for page_num in news_items.iter_pages() %}
+            <li class="page-item {% if page_num == news_items.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('main.news_list', page=page_num) }}">{{ page_num }}</a>
+            </li>
+            {% endfor %}
+            <li class="page-item {% if not news_items.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('main.news_list', page=news_items.next_num) }}">Вперед</a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
