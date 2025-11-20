@@ -1,0 +1,57 @@
+{% extends "profile_base.html" %}
+
+{% set breadcrumbs_extra = [('Мои действия', '#')] %}
+
+{% block title %}Мои действия{% endblock %}
+
+{% block profile_content %}
+<div class="card-modern p-4">
+    <h2 class="h4 mb-4"><i class="fas fa-history me-3"></i>Журнал моих действий</h2>
+    
+    <div class="table-responsive">
+        <table class="table table-sm table-hover">
+            <thead>
+                <tr>
+                    <th>Дата и время</th>
+                    <th>Действие</th>
+                    <th>Сущность</th>
+                    <th>IP-адрес</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for activity in activities.items %}
+                <tr>
+                    <td>{{ activity.timestamp.strftime('%d.%m.%Y %H:%M') }}</td>
+                    <td>{{ activity.action }}</td>
+                    <td>{{ activity.entity_type or '-' }}</td>
+                    <td>{{ activity.ip_address }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted">Нет записей о действиях.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Пагинация -->
+    {% if activities.pages > 1 %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if not activities.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('profile.my_activity', page=activities.prev_num) }}">Назад</a>
+            </li>
+            {% for page_num in activities.iter_pages() %}
+            <li class="page-item {% if page_num == activities.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('profile.my_activity', page=page_num) }}">{{ page_num }}</a>
+            </li>
+            {% endfor %}
+            <li class="page-item {% if not activities.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('profile.my_activity', page=activities.next_num) }}">Вперед</a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

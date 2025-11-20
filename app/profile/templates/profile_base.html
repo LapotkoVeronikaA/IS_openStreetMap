@@ -17,7 +17,7 @@
                    class="list-group-item list-group-item-action {% if request.endpoint == 'profile.edit' %}active{% endif %}">
                    <i class="fas fa-user-edit fa-fw me-2"></i>Редактировать профиль
                 </a>
-                <a href="#" 
+                <a href="{{ url_for('profile.my_activity') }}" 
                    class="list-group-item list-group-item-action {% if request.endpoint == 'profile.my_activity' %}active{% endif %}">
                    <i class="fas fa-history fa-fw me-2"></i>Мои действия
                 </a>

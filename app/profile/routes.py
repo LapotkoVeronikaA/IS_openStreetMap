@@ -1,6 +1,6 @@
 # app/profile/routes.py
 from flask import render_template, request, redirect, url_for, flash, current_app
-from app.models import User
+from app.models import User, UserActivity
 from app.extensions import db
 from app.utils import get_current_user_obj, permission_required_manual, log_user_activity, check_user_permission, login_required_manual
 
@@ -92,10 +92,23 @@ def security():
         elif new_password != confirm_password:
             flash('Новые пароли не совпадают.', 'warning')
         else:
-            user.password = new_password
+            user.password = new_password  # В реальном приложении нужно хешировать
             db.session.commit()
             log_user_activity("Смена пароля", "User", user.id)
             flash('Пароль успешно изменен.', 'success')
             return redirect(url_for('profile.security'))
 
     return render_template('profile_security.html', user=user)
+
+
+@profile_bp.route('/my-activity')
+@login_required_manual
+def my_activity():
+    user = get_current_user_obj()
+    page = request.args.get('page', 1, type=int)
+    
+    activities = UserActivity.query.filter_by(user_id=user.id)\
+        .order_by(UserActivity.timestamp.desc())\
+        .paginate(page=page, per_page=15, error_out=False)
+        
+    return render_template('profile_my_activity.html', user=user, activities=activities)
