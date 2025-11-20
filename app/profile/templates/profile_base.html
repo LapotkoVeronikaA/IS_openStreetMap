@@ -25,7 +25,7 @@
                    class="list-group-item list-group-item-action {% if request.endpoint == 'profile.my_feedback' %}active{% endif %}">
                    <i class="fas fa-inbox fa-fw me-2"></i>Мои обращения
                 </a>
-                <a href="#" 
+                <a href="{{ url_for('profile.security') }}" 
                    class="list-group-item list-group-item-action {% if request.endpoint == 'profile.security' %}active{% endif %}">
                    <i class="fas fa-shield-alt fa-fw me-2"></i>Безопасность
                 </a>

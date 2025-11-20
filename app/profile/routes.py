@@ -3,6 +3,7 @@ from flask import render_template, request, redirect, url_for, flash, current_ap
 from app.models import User
 from app.extensions import db
 from app.utils import get_current_user_obj, permission_required_manual, log_user_activity, check_user_permission, login_required_manual
+
 from . import profile_bp
 
 @profile_bp.route('/')
@@ -74,3 +75,27 @@ def edit(user_id):
             current_app.logger.error(f"Ошибка обновления профиля {user_id}: {e}")
 
     return render_template('profile_edit.html', user=user_to_edit, can_edit_all=can_edit_all)
+
+@profile_bp.route('/security', methods=['GET', 'POST'])
+@login_required_manual
+def security():
+    user = get_current_user_obj()
+    if request.method == 'POST':
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+
+        if not current_password or user.password != current_password:
+            flash('Текущий пароль введен неверно.', 'danger')
+        elif not new_password or len(new_password) < 4:
+            flash('Новый пароль не может быть пустым и должен содержать не менее 4 символов.', 'warning')
+        elif new_password != confirm_password:
+            flash('Новые пароли не совпадают.', 'warning')
+        else:
+            user.password = new_password
+            db.session.commit()
+            log_user_activity("Смена пароля", "User", user.id)
+            flash('Пароль успешно изменен.', 'success')
+            return redirect(url_for('profile.security'))
+
+    return render_template('profile_security.html', user=user)
