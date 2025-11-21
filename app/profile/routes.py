@@ -1,6 +1,6 @@
 # app/profile/routes.py
 from flask import render_template, request, redirect, url_for, flash, current_app
-from app.models import User, UserActivity
+from app.models import User, UserActivity, Feedback
 from app.extensions import db
 from app.utils import get_current_user_obj, permission_required_manual, log_user_activity, check_user_permission, login_required_manual
 
@@ -112,3 +112,16 @@ def my_activity():
         .paginate(page=page, per_page=15, error_out=False)
         
     return render_template('profile_my_activity.html', user=user, activities=activities)
+
+
+@profile_bp.route('/my-feedback')
+@login_required_manual
+def my_feedback():
+    user = get_current_user_obj()
+    page = request.args.get('page', 1, type=int)
+
+    feedback_items = Feedback.query.filter_by(user_id=user.id)\
+        .order_by(Feedback.created_at.desc())\
+        .paginate(page=page, per_page=10, error_out=False)
+
+    return render_template('profile_my_feedback.html', user=user, feedback_items=feedback_items)

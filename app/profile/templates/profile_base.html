@@ -21,7 +21,7 @@
                    class="list-group-item list-group-item-action {% if request.endpoint == 'profile.my_activity' %}active{% endif %}">
                    <i class="fas fa-history fa-fw me-2"></i>Мои действия
                 </a>
-                <a href="#"
+                <a href="{{ url_for('profile.my_feedback') }}"
                    class="list-group-item list-group-item-action {% if request.endpoint == 'profile.my_feedback' %}active{% endif %}">
                    <i class="fas fa-inbox fa-fw me-2"></i>Мои обращения
                 </a>

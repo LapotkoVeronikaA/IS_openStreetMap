@@ -1,0 +1,49 @@
+{% extends "profile_base.html" %}
+
+{% set breadcrumbs_extra = [('Мои обращения', '#')] %}
+
+{% block title %}Мои обращения{% endblock %}
+
+{% block profile_content %}
+<div class="card-modern p-4">
+    <h2 class="h4 mb-4"><i class="fas fa-inbox me-3"></i>Мои обращения</h2>
+
+    <div class="list-group">
+        {% for item in feedback_items.items %}
+        <div class="list-group-item flex-column align-items-start">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">{{ item.subject }}</h5>
+                <div>
+                    <span class="badge bg-{% if item.is_read %}success{% else %}warning{% endif %}">
+                        {% if item.is_read %}Прочитано{% else %}В обработке{% endif %}
+                    </span>
+                    <small class="text-muted ms-2">{{ item.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+                </div>
+            </div>
+            <p class="mb-1">{{ item.message }}</p>
+        </div>
+        {% else %}
+        <p class="text-center text-muted">Вы еще не отправляли сообщений.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Пагинация -->
+    {% if feedback_items.pages > 1 %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if not feedback_items.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('profile.my_feedback', page=feedback_items.prev_num) }}">Назад</a>
+            </li>
+            {% for page_num in feedback_items.iter_pages() %}
+            <li class="page-item {% if page_num == feedback_items.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('profile.my_feedback', page=page_num) }}">{{ page_num }}</a>
+            </li>
+            {% endfor %}
+            <li class="page-item {% if not feedback_items.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('profile.my_feedback', page=feedback_items.next_num) }}">Вперед</a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
