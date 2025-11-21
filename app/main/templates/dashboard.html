@@ -23,7 +23,7 @@
                 </div>
                 <h3 class="h5 mb-2">Интерактивная карта</h3>
                 <p class="text-muted mb-4">Просмотр всех организаций на интерактивной карте</p>
-                <a href="#" class="btn btn-info w-100">
+                <a href="{{ url_for('map.show_map') }}" class="btn btn-info w-100">
                     Перейти <i class="fas fa-arrow-right ms-2"></i>
                 </a>
             </div>
@@ -48,7 +48,7 @@
         
         <!-- Карточка Администрирование -->
         {% if check_user_permission('manage_users') or check_user_permission('manage_groups') or check_user_permission('view_logs') %}
-        {% set admin_url = '#' %}
+        {% set admin_url = url_for('users.user_management') %}
         <div class="col-lg-4 col-md-6">
             <div class="card-modern p-4 h-100 text-center">
                 <div class="bg-purple bg-opacity-10 p-4 rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
