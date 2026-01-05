@@ -2,7 +2,7 @@
 from flask import Flask
 from .config import Config
 from .extensions import db, migrate
-from .utils import USER_GROUPS, get_current_user_obj, check_user_permission
+from .utils import USER_GROUPS, get_current_user_obj, check_user_permission, geocode_location
 import jinja2
 
 def create_app(config_class=Config):
@@ -85,6 +85,7 @@ def create_app(config_class=Config):
         with app.app_context():
             print("Синхронизация групп и прав...")
             
+            # 1. Создание групп
             group_objects = {}
             for group_key, group_info in USER_GROUPS.items():
                 group_obj = Group.query.filter_by(name=group_info['name']).first()
@@ -100,6 +101,7 @@ def create_app(config_class=Config):
             db.session.commit()
             print(f"Найдено/создано {len(group_objects)} групп.")
 
+            # 2. Сбор всех прав из конфига
             all_permission_names = set()
             for group_info in USER_GROUPS.values():
                 for perm in group_info['permissions']:
@@ -115,8 +117,11 @@ def create_app(config_class=Config):
                 'view_map': 'Просматривать интерактивную карту',
                 'view_profile': 'Просматривать личный кабинет',
                 'manage_news': 'Управлять новостями',
+                'manage_directory': 'Управлять справочниками',
+                'view_directory': 'Просматривать справочники'
             }
 
+            # 3. Создание объектов прав
             permission_objects = {}
             for perm_name in sorted(list(all_permission_names)):
                 perm_obj = Permission.query.filter_by(name=perm_name).first()
@@ -133,6 +138,7 @@ def create_app(config_class=Config):
             db.session.commit()
             print(f"Найдено/создано/обновлено {len(permission_objects)} прав.")
 
+            # 4. Привязка прав к группам
             if 'admin' in USER_GROUPS and 'permissions' in USER_GROUPS['admin']:
                 USER_GROUPS['admin']['permissions']['manage_groups'] = True
             
@@ -141,6 +147,7 @@ def create_app(config_class=Config):
                 if group_key:
                     group_info = USER_GROUPS[group_key]
                     
+                    # Очищаем старые и добавляем актуальные
                     group_obj.permissions.clear()
                     for perm_name, has_perm in group_info.get('permissions', {}).items():
                         if has_perm and perm_name in permission_objects:
@@ -148,14 +155,12 @@ def create_app(config_class=Config):
             
             db.session.commit()
 
+            # 5. Удаление мусора
             print("Поиск устаревших прав...")
             db_permissions = Permission.query.all()
             for perm in db_permissions:
                 if perm.name not in all_permission_names:
                     print(f"  - Найдено устаревшее право: '{perm.name}'. Удаление...")
-                    for group in perm.groups:
-                        group.permissions.remove(perm)
-                    db.session.commit()
                     db.session.delete(perm)
             db.session.commit()
 
