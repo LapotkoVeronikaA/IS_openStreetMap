@@ -62,21 +62,33 @@ class UserActivity(db.Model):
 class Organization(db.Model):
     __tablename__ = 'organization'
     id = db.Column(db.Integer, primary_key=True)
+    
+    # Иерархия: родитель и дети
+    parent_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
+    children = db.relationship('Organization', backref=db.backref('parent', remote_side=[id]), lazy='dynamic', cascade="all, delete-orphan")
+
     name = db.Column(db.String(255), nullable=False, index=True)
     legal_name = db.Column(db.String(255))
-    org_type = db.Column(db.String(100), nullable=True)
-    location = db.Column(db.String(255), nullable=False) # Фактический адрес для геокодинга
+    org_type = db.Column(db.String(100), nullable=True) 
+    
+    location = db.Column(db.String(255), nullable=True)
+    
     head_of_organization = db.Column(db.String(150))
+    head_position = db.Column(db.String(150))
+    
     website = db.Column(db.String(200))
     main_phone = db.Column(db.String(100))
     main_email = db.Column(db.String(120))
-    departments = db.Column(db.Text, nullable=True) # Замена 'subdivisions'
+    
     contacts = db.Column(db.Text, nullable=True)
     notes = db.Column(db.Text)
+    
     latitude = db.Column(db.Float, nullable=True)
     longitude = db.Column(db.Float, nullable=True)
+    
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+    
     events = db.relationship('Event', back_populates='organization', lazy='dynamic', cascade="all, delete-orphan")
     
     def set_contacts(self, contacts_list):
@@ -88,24 +100,18 @@ class Organization(db.Model):
             except json.JSONDecodeError: return []
         return []
         
-    def set_departments(self, departments_list):
-        if departments_list: self.departments = json.dumps(departments_list, ensure_ascii=False)
-        else: self.departments = None
-    def get_departments(self):
-        if self.departments:
-            try: return json.loads(self.departments)
-            except json.JSONDecodeError: return []
-        return []
-
     @property
     def total_employee_count(self):
-        total = 0
-        for dept in self.get_departments():
-            try:
-                total += int(dept.get('employee_count', 0) or 0)
-            except (ValueError, TypeError):
-                continue
-        return total
+        return len(self.get_contacts())
+
+    @property
+    def website_url(self):
+        """Возвращает абсолютную ссылку на сайт (с http), даже если введено просто www..."""
+        if not self.website:
+            return None
+        if self.website.startswith('http://') or self.website.startswith('https://'):
+            return self.website
+        return f'http://{self.website}'
         
     def __repr__(self): return f'<Organization {self.name}>'
 
@@ -130,13 +136,11 @@ class Feedback(db.Model):
     message = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     is_read = db.Column(db.Boolean, default=False, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # Связь с пользователем, если он был авторизован
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) 
     user = db.relationship('User')
     
     def __repr__(self):
         return f'<Feedback {self.subject}>'
-
-# --- НОВЫЕ МОДЕЛИ ---
 
 class News(db.Model):
     __tablename__ = 'news'
@@ -144,7 +148,7 @@ class News(db.Model):
     title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # Автор новости
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) 
     user = db.relationship('User')
 
     def __repr__(self):
