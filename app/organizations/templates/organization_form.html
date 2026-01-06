@@ -1,186 +1,182 @@
+<!-- organization_form.html -->
 {% extends "base.html" %}
 
-{% block title %}{% if org %}Редактирование организации{% else %}Новая организация{% endif %}{% endblock %}
+{% block title %}{{ 'Редактирование' if org else 'Новое подразделение' }}{% endblock %}
 
 {% block breadcrumbs %}
-    {% if org %}
-        {{ breadcrumbs([('Реестр организаций', url_for('organizations.index')), (org.name, url_for('organizations.view_org', org_id=org.id)), ('Редактирование', '#')]) }}
-    {% else %}
-        {{ breadcrumbs([('Реестр организаций', url_for('organizations.index')), ('Новая организация', '#')]) }}
-    {% endif %}
+  {{ breadcrumbs([('Структура', url_for('organizations.index')), ('Форма редактирования', '#')]) }}
 {% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-10">
-        <div class="card-modern p-4">
+        <div class="card-modern p-4 shadow-sm">
             <h2 class="h4 mb-4">
-                {% if org %}<i class="fas fa-edit me-3"></i>Редактирование: {{ form_data.name }}{% else %}<i class="fas fa-plus-circle me-3"></i>Новая организация{% endif %}
+                <i class="fas fa-edit me-3 text-primary"></i>{{ 'Редактирование: ' ~ org.name if org else 'Создание нового объекта' }}
             </h2>
 
             <form method="POST" enctype="multipart/form-data">
                 <div class="row g-3">
-                    <div class="col-md-6"><label class="form-label">Название (например, "УК 'Кожуховский'")</label><input type="text" name="name" class="form-control" value="{{ form_data.name or '' }}" required></div>
-                    <div class="col-md-6"><label class="form-label">Юридическое название</label><input type="text" name="legal_name" class="form-control" value="{{ form_data.legal_name or 'ЧОУ ВО «Московский университет им. С.Ю. Витте»' }}"></div>
-                    <div class="col-md-8"><label class="form-label">Фактический адрес</label><input type="text" name="location" class="form-control" value="{{ form_data.location or '' }}" required></div>
-                    <div class="col-md-4"><label class="form-label">Тип организации</label>
-                        <select name="org_type" class="form-select">
-                            <option value="">-- Не выбрано --</option>
-                            {% for type in organization_types %}<option value="{{ type.name }}" {% if form_data.org_type == type.name %}selected{% endif %}>{{ type.name }}</option>{% endfor %}
-                        </select>
+                    <!-- Блок Иерархии -->
+                    <div class="col-12">
+                         <label class="form-label fw-bold text-dark">Вышестоящее подразделение (подчиненность)</label>
+                         <select name="parent_id" class="form-select">
+                             <option value="">-- Самостоятельный объект (Корень структуры) --</option>
+                             {% for item in all_orgs %}
+                                <option value="{{ item.id }}" {% if org and org.parent_id == item.id %}selected{% endif %}>
+                                    {{ item.name }} [{{ item.org_type or '-' }}] ({{ item.location or 'Адрес не указан' }})
+                                </option>
+                             {% endfor %}
+                         </select>
+                         <div class="form-text">Выберите организацию, в состав которой входит данный отдел или кафедра.</div>
                     </div>
-                    <div class="col-md-6"><label class="form-label">Руководитель (например, Ректор)</label><input type="text" name="head_of_organization" class="form-control" value="{{ form_data.head_of_organization or '' }}"></div>
-                    <div class="col-md-6"><label class="form-label">Сайт</label><input type="url" name="website" class="form-control" value="{{ form_data.website or '' }}"></div>
-                    <div class="col-md-6"><label class="form-label">Основной телефон</label><input type="tel" name="main_phone" class="form-control" value="{{ form_data.main_phone or '' }}"></div>
-                    <div class="col-md-6"><label class="form-label">Основной Email</label><input type="email" name="main_email" class="form-control" value="{{ form_data.main_email or '' }}"></div>
-                </div>
-                
-                <hr class="my-4">
 
-                <h5 class="mb-3">Факультеты / Отделы ({{ form_data.total_employee_count or 0 }} чел.)</h5>
-                <div id="departments-container">
-                    {% set departments = form_data.get_departments() if form_data and form_data.get_departments is defined else [] %}
-                    {% for dept in departments %}
-                    <div class="department-group border rounded p-3 mb-3">
-                        <button type="button" class="btn-close float-end remove-department-btn" title="Удалить отдел"></button>
-                        <div class="row g-3">
-                            <div class="col-md-5"><label class="form-label">Факультет/Управление</label>
-                                <select name="department_faculty" class="form-select">
-                                    <option value="">-- Не выбрано --</option>
-                                    {% for faculty in faculty_names %}<option value="{{ faculty.name }}" {% if dept.faculty == faculty.name %}selected{% endif %}>{{ faculty.name }}</option>{% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-5"><label class="form-label">Отдел/Кафедра</label>
-                                <select name="department_name" class="form-select">
-                                    <option value="">-- Не выбрано --</option>
-                                    {% for d_name in department_names %}<option value="{{ d_name.name }}" {% if dept.department == d_name.name %}selected{% endif %}>{{ d_name.name }}</option>{% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-2"><label class="form-label">Сотрудников</label><input type="number" name="department_employee_count" class="form-control" value="{{ dept.employee_count or '' }}"></div>
-                        </div>
+                    <!-- Основная информация -->
+                    <div class="col-md-8">
+                        <label class="form-label fw-bold">Наименование объекта</label>
+                        <input type="text" name="name" class="form-control" value="{{ org.name if org else '' }}" required placeholder="Например: Кафедра ИТ">
                     </div>
-                    {% endfor %}
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Тип</label>
+                        <input type="text" name="org_type" class="form-control" value="{{ org.org_type if org else '' }}" list="typeOptions" placeholder="Филиал, Кафедра...">
+                        <datalist id="typeOptions">
+                            <option value="Университет">
+                            <option value="Филиал">
+                            <option value="Факультет">
+                            <option value="Кафедра">
+                            <option value="Департамент">
+                            <option value="Отдел">
+                            <option value="Управление">
+                            <option value="Лаборатория">
+                        </datalist>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Юридическое название организации</label>
+                        <input type="text" name="legal_name" class="form-control" value="{{ org.legal_name if org else '' }}" placeholder="ЧОУ ВО «Московский университет им. С.Ю. Витте»">
+                    </div>
+
+                    <div class="col-md-12">
+                        <label class="form-label">Фактический адрес размещения</label>
+                        <input type="text" name="location" class="form-control" value="{{ org.location if org else '' }}" placeholder="г. Москва, 2-й Кожуховский проезд, д. 12, стр. 1">
+                    </div>
+
+                    <!-- Руководитель -->
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">ФИО Руководителя</label>
+                        <input type="text" name="head_of_organization" class="form-control" value="{{ org.head_of_organization if org else '' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Должность руководителя</label>
+                        <input type="text" name="head_position" class="form-control" value="{{ org.head_position if org else '' }}" placeholder="Декан, Заведующий кафедрой...">
+                    </div>
+
+                    <!-- Контакты -->
+                    <div class="col-md-4">
+                        <label class="form-label">Общий телефон</label>
+                        <input type="text" name="main_phone" class="form-control" value="{{ org.main_phone if org else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Общий Email</label>
+                        <input type="email" name="main_email" class="form-control" value="{{ org.main_email if org else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Официальный сайт</label>
+                        <input type="text" name="website" class="form-control" value="{{ org.website if org else '' }}" placeholder="www.muiv.ru">
+                    </div>
                 </div>
-                <button type="button" id="add-department-btn" class="btn btn-outline-primary mt-2"><i class="fas fa-plus me-2"></i>Добавить отдел</button>
+
+                <hr class="my-5">
+
+                <!-- СЕКЦИЯ СОТРУДНИКОВ -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0"><i class="fas fa-users me-2 text-secondary"></i>Сотрудники и штат</h5>
+                    <button type="button" id="add-contact-btn" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-plus me-1"></i> Добавить сотрудника
+                    </button>
+                </div>
                 
-                <hr class="my-4">
-                
-                <h5 class="mb-3">Контактные лица</h5>
                 <div id="contacts-container">
-                    {% set contacts = form_data.get_contacts() if form_data and form_data.get_contacts is defined else [] %}
+                    {% set contacts = org.get_contacts() if org else [] %}
                     {% for contact in contacts %}
-                    <div class="contact-group border rounded p-3 mb-3">
-                        <button type="button" class="btn-close float-end remove-contact-btn" title="Удалить контакт"></button>
-                        <div class="row g-3">
-                            <div class="col-md-12"><label class="form-label">ФИО</label><input type="text" name="contact_full_name" class="form-control" value="{{ contact.full_name or '' }}"></div>
-                            <div class="col-md-6"><label class="form-label">Должность</label><input type="text" name="contact_position" class="form-control" value="{{ contact.position or '' }}"></div>
-                            <div class="col-md-6"><label class="form-label">Телефон</label><input type="text" name="contact_phone" class="form-control" value="{{ contact.phone or '' }}"></div>
+                    <div class="contact-group border rounded p-3 mb-3 position-relative bg-light bg-opacity-50">
+                        <button type="button" class="btn-close position-absolute top-0 end-0 m-2 remove-contact-btn" title="Удалить"></button>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="small text-muted">ФИО</label>
+                                <input type="text" name="contact_full_name" class="form-control form-control-sm" value="{{ contact.full_name }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="small text-muted">Должность</label>
+                                <input type="text" name="contact_position" class="form-control form-control-sm" value="{{ contact.position }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="small text-muted">Телефон</label>
+                                <input type="text" name="contact_phone" class="form-control form-control-sm" value="{{ contact.phone }}">
+                            </div>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
-                <button type="button" id="add-contact-btn" class="btn btn-outline-primary mt-2"><i class="fas fa-plus me-2"></i>Добавить контакт</button>
-                
-                <hr class="my-4">
 
-                <h5 class="mb-3">Фотографии</h5>
-                <div class="card bg-light p-3 mb-3">
-                    <div class="mb-3"><label for="photos" class="form-label">Добавить новые фото</label><input class="form-control" type="file" id="photos" name="photos" multiple accept="image/*"></div>
-                    {% if photos %}<div class="row g-2">
-                        {% for photo_url in photos %}<div class="col-md-4 position-relative">
-                            <img src="{{ photo_url }}" class="img-thumbnail" style="height: 150px; width: 100%; object-fit: cover;">
-                            <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 delete-file-btn" data-org-id="{{ org.id }}" data-subfolder="photos" data-filename="{{ photo_url.split('/')[-1] }}"><i class="fas fa-times"></i></button>
-                        </div>{% endfor %}
-                    </div>{% endif %}
+                <hr class="my-5">
+
+                <!-- СЕКЦИЯ ФАЙЛОВ -->
+                <h5 class="mb-3"><i class="fas fa-paperclip me-2 text-secondary"></i>Медиа-материалы и документация</h5>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded">
+                            <label class="form-label fw-bold">Фотографии (внешний вид, интерьер)</label>
+                            <input class="form-control" type="file" name="photos" multiple accept="image/*">
+                            
+                            {% if photos %}
+                            <div class="mt-3 d-flex flex-wrap gap-2">
+                                 {% for photo_url in photos %}
+                                 <div class="position-relative border rounded p-1 bg-white">
+                                     <img src="{{ photo_url }}" style="height: 60px; width: 60px; object-fit: cover;" class="rounded">
+                                     <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 py-0 px-1 delete-file-btn" 
+                                             data-org-id="{{ org.id }}" data-subfolder="photos" data-filename="{{ photo_url.split('/')[-1] }}"
+                                             style="font-size: 0.7rem; margin-top: -5px; margin-right: -5px;">&times;</button>
+                                 </div>
+                                 {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded h-100">
+                            <label class="form-label fw-bold">Планы помещений / Чертежи (PDF, JPG)</label>
+                            <input class="form-control" type="file" name="floor_plans" multiple>
+                            
+                            {% if floor_plans %}
+                            <div class="mt-3">
+                                 {% for plan_url in floor_plans %}
+                                 <div class="d-flex justify-content-between align-items-center border-bottom py-1">
+                                     <a href="{{ plan_url }}" target="_blank" class="small text-truncate" style="max-width: 80%;">
+                                         <i class="fas fa-file-pdf me-1 text-danger"></i> {{ plan_url.split('/')[-1] }}
+                                     </a>
+                                     <button type="button" class="btn btn-link text-danger btn-sm p-0 delete-file-btn" 
+                                             data-org-id="{{ org.id }}" data-subfolder="floor_plans" data-filename="{{ plan_url.split('/')[-1] }}">
+                                         <i class="fas fa-trash-alt"></i>
+                                     </button>
+                                 </div>
+                                 {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
 
-                <h5 class="mb-3">Планы этажей / Документы</h5>
-                <div class="card bg-light p-3">
-                    <div class="mb-3"><label for="floor_plans" class="form-label">Добавить новые файлы</label><input class="form-control" type="file" id="floor_plans" name="floor_plans" multiple accept="image/*,application/pdf"></div>
-                    {% if floor_plans %}<div class="list-group">
-                        {% for plan_url in floor_plans %}<div class="list-group-item d-flex justify-content-between align-items-center">
-                            <a href="{{ plan_url }}" target="_blank"><i class="fas fa-file-alt me-2"></i>{{ plan_url.split('/')[-1] }}</a>
-                            <button type="button" class="btn btn-sm btn-outline-danger delete-file-btn" data-org-id="{{ org.id }}" data-subfolder="floor_plans" data-filename="{{ plan_url.split('/')[-1] }}"><i class="fas fa-times"></i></button>
-                        </div>{% endfor %}
-                    </div>{% endif %}
+                <div class="mt-4">
+                    <label class="form-label fw-bold">Заметки по объекту (внутренняя информация)</label>
+                    <textarea name="notes" class="form-control" rows="4" placeholder="Особенности расположения, график работы, инвентарные сведения...">{{ org.notes if org else '' }}</textarea>
                 </div>
 
-                <div class="my-4"><label class="form-label">Заметки</label><textarea name="notes" class="form-control" rows="3">{{ form_data.notes or '' }}</textarea></div>
-
-                <div class="d-flex justify-content-end gap-2 mt-4">
-                    <a href="{{ url_for('organizations.index') }}" class="btn btn-outline-secondary">Отмена</a>
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Сохранить</button>
+                <div class="d-flex justify-content-end gap-3 mt-5">
+                    <a href="{{ url_for('organizations.index') }}" class="btn btn-outline-secondary px-4">Отмена</a>
+                    <button type="submit" class="btn btn-primary px-5 shadow-sm">Сохранить данные</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-
-<template id="department-template">
-    <div class="department-group border rounded p-3 mb-3">
-        <button type="button" class="btn-close float-end remove-department-btn" title="Удалить отдел"></button>
-        <div class="row g-3">
-            <div class="col-md-5"><label class="form-label">Факультет/Управление</label>
-                <select name="department_faculty" class="form-select">
-                    <option value="">-- Не выбрано --</option>
-                    {% for faculty in faculty_names %}<option value="{{ faculty.name }}">{{ faculty.name }}</option>{% endfor %}
-                </select>
-            </div>
-            <div class="col-md-5"><label class="form-label">Отдел/Кафедра</label>
-                <select name="department_name" class="form-select">
-                    <option value="">-- Не выбрано --</option>
-                    {% for d_name in department_names %}<option value="{{ d_name.name }}">{{ d_name.name }}</option>{% endfor %}
-                </select>
-            </div>
-            <div class="col-md-2"><label class="form-label">Сотрудников</label><input type="number" name="department_employee_count" class="form-control"></div>
-        </div>
-    </div>
-</template>
-
-<template id="contact-template">
-    <div class="contact-group border rounded p-3 mb-3">
-        <button type="button" class="btn-close float-end remove-contact-btn" title="Удалить контакт"></button>
-        <div class="row g-3">
-            <div class="col-md-12"><label class="form-label">ФИО</label><input type="text" name="contact_full_name" class="form-control"></div>
-            <div class="col-md-6"><label class="form-label">Должность</label><input type="text" name="contact_position" class="form-control"></div>
-            <div class="col-md-6"><label class="form-label">Телефон</label><input type="text" name="contact_phone" class="form-control"></div>
-        </div>
-    </div>
-</template>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    function setupDynamicList(containerId, buttonId, templateId, groupClass, removeBtnClass) {
-        const container = document.getElementById(containerId);
-        const addButton = document.getElementById(buttonId);
-        const template = document.getElementById(templateId);
-        addButton.addEventListener('click', () => container.appendChild(template.content.cloneNode(true)));
-        container.addEventListener('click', (event) => {
-            if (event.target.closest(removeBtnClass)) {
-                event.target.closest(groupClass).remove();
-            }
-        });
-    }
-
-    setupDynamicList('departments-container', 'add-department-btn', 'department-template', '.department-group', '.remove-department-btn');
-    setupDynamicList('contacts-container', 'add-contact-btn', 'contact-template', '.contact-group', '.remove-contact-btn');
-
-    document.querySelectorAll('.delete-file-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const orgId = this.dataset.orgId;
-            const subfolder = this.dataset.subfolder;
-            const filename = this.dataset.filename;
-            const elementToRemove = this.closest('.col-md-4, .list-group-item');
-            if (confirm(`Удалить файл "${filename}"?`)) {
-                fetch(`/organizations/delete_file/${orgId}/${subfolder}/${filename}`, { method: 'POST' })
-                .then(response => response.json())
-                .then(data => { if (data.success) { elementToRemove.remove(); } else { alert('Ошибка: ' + data.message); } })
-                .catch(error => alert('Произошла сетевая ошибка.'));
-            }
-        });
-    });
-});
-</script>
-{% endblock %}
