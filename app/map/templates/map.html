@@ -1,3 +1,4 @@
+<!-- map.html -->
 {% extends "base.html" %}
 
 {% block title %}Интерактивная карта{% endblock %}
@@ -9,26 +10,14 @@
 {% block extra_css %}
 <!-- Leaflet CSS -->
 <link rel="stylesheet" href="{{ url_for('static', filename='leaflet.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='MarkerCluster.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='MarkerCluster.Default.css') }}" />
 
 <style>
-    /* Основной контейнер, занимающий всю высоту */
-    .map-main-container {
-        height: 80vh;
-        width: 100%;
-    }
-
-    /* Колонки и карта */
-    .map-row {
-        transition: all 0.3s ease-in-out;
-    }
-    #map-column, #map {
-        height: 100%;
-    }
-    
-    #map {
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.15);
-    }
+    .map-main-container { height: 80vh; width: 100%; }
+    .map-row { transition: all 0.3s ease-in-out; }
+    #map-column, #map { height: 100%; }
+    #map { border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.15); }
     
     /* Информационная панель */
     #info-panel {
@@ -39,92 +28,41 @@
         display: flex;
         flex-direction: column;
         box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        overflow: hidden;
     }
     #info-panel-header {
-        padding: 0.75rem 1.25rem;
+        padding: 1rem;
         background-color: #f8f9fa;
         border-bottom: 1px solid #dee2e6;
         flex-shrink: 0;
     }
-    #info-panel-title {
-        margin-bottom: 0;
-        font-size: 1.1rem;
-        font-weight: 500;
-    }
-    #info-panel-body {
-        padding: 1.25rem;
-        overflow-y: auto;
+    #info-panel-title { font-weight: 600; margin-bottom: 0; }
+    
+    /* Контент вкладок */
+    #info-panel-content {
         flex-grow: 1;
+        overflow-y: auto;
+        padding: 0;
     }
-    .info-group {
-        margin-bottom: 1.25rem;
+    .tab-content { padding: 1rem; }
+    
+    .nav-tabs .nav-link {
+        border-radius: 0;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: #64748b;
     }
-    .info-group h6 {
-        font-weight: bold;
+    .nav-tabs .nav-link.active {
         color: #0d6efd;
-        margin-bottom: 0.75rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid #eee;
-    }
-    .info-group p {
-        margin-bottom: 0.5rem;
-    }
-    .info-group strong {
-        color: #555;
-    }
-    .info-group ul {
-        padding-left: 1.2rem;
-        list-style-type: none;
-    }
-    .info-group ul li {
-        margin-bottom: 0.5rem;
-    }
-    .info-photos img {
-        width: 100%;
-        height: 120px;
-        object-fit: cover;
-        cursor: pointer;
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    }
-    .info-photos img:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        border-bottom: 2px solid #0d6efd;
+        background: none;
     }
     
-    /* Стили для нового поиска */
-    #search-wrapper {
-        position: relative;
-        z-index: 990;
+    .panel-list-item {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f1f5f9;
     }
-    #search-results {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        max-height: 300px;
-        overflow-y: auto;
-        background-color: #fff;
-        border: 1px solid #dee2e6;
-        border-top: none;
-        border-radius: 0 0 .375rem .375rem;
-        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
-    }
-    #search-results .list-group-item {
-        cursor: pointer;
-    }
-    #search-results .list-group-item:hover {
-        background-color: #f8f9fa;
-    }
-
-    .legend { padding: 6px 10px; font: 14px/16px Arial, Helvetica, sans-serif; background: rgba(255,255,255,0.85); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; line-height: 24px; }
-    .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.7; }
-
-    /* Стили для панели фильтров */
-    #filters-panel {
-        height: 100%;
-        background-color: #f8f9fa;
-        border-left: 1px solid #dee2e6;
-    }
+    .panel-list-item:last-child { border-bottom: none; }
 </style>
 {% endblock %}
 
@@ -132,7 +70,7 @@
 <div class="card-modern p-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
         <h2 class="h4 mb-0">
-            <i class="fas fa-map-marked-alt me-3"></i>Интерактивная карта организаций
+            <i class="fas fa-map-marked-alt me-3"></i>Интерактивная карта
         </h2>
         
         <div class="d-flex align-items-center gap-2">
@@ -150,16 +88,16 @@
     </div>
 
     <div class="map-main-container">
-        <div class="row h-100 map-row">
+        <div class="row h-100 map-row g-0">
             <div class="col-md-12 h-100" id="map-column">
                 <div id="map"></div>
             </div>
 
             <div class="col-md-3 h-100 d-none" id="filters-panel">
                 <div class="p-3">
-                    <h5 class="mb-3">Фильтры</h5>
+                    <h5 class="mb-3">Фильтры отображения</h5>
+                    <p class="small text-muted">Выберите тип организаций для отображения на карте:</p>
                     <div class="mb-3">
-                        <label for="type-filter" class="form-label">Тип организации</label>
                         <select id="type-filter" class="form-select form-select-sm">
                             <option value="all">Все типы</option>
                             {% for type in org_types %}
@@ -173,185 +111,39 @@
 
             <div class="col-md-4 h-100 d-none" id="info-panel-column">
                 <div id="info-panel">
-                    <div id="info-panel-header" class="d-flex justify-content-between align-items-center">
-                        <h5 id="info-panel-title">Информация об организации</h5>
+                    <div id="info-panel-header" class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 id="info-panel-title"></h5>
+                            <small class="text-muted" id="info-panel-subtitle"></small>
+                        </div>
                         <button type="button" class="btn-close" id="info-panel-close-btn" title="Закрыть"></button>
                     </div>
-                    <div id="info-panel-body"></div>
+                    
+                    <ul class="nav nav-tabs nav-justified" id="infoTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab"><i class="fas fa-info-circle me-1"></i>Инфо</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="structure-tab" data-bs-toggle="tab" data-bs-target="#structure" type="button" role="tab"><i class="fas fa-sitemap me-1"></i>Структура</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="contacts-tab" data-bs-toggle="tab" data-bs-target="#contacts" type="button" role="tab"><i class="fas fa-users me-1"></i>Штат</button>
+                        </li>
+                    </ul>
+
+                    <div id="info-panel-content">
+                        <div class="tab-content" id="infoTabsContent">
+                             <div class="tab-pane fade show active" id="general" role="tabpanel"></div>
+                             <div class="tab-pane fade" id="structure" role="tabpanel"></div>
+                             <div class="tab-pane fade" id="contacts" role="tabpanel"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-2 border-top bg-light" id="info-panel-footer">
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="text-center text-muted small mt-2">
-        © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors
-    </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<!-- Leaflet JS -->
-<script src="{{ url_for('static', filename='leaflet.js') }}"></script>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const userPermissions = {{ user_perms|tojson }};
-        
-        const mapColumn = document.getElementById('map-column');
-        const infoPanelColumn = document.getElementById('info-panel-column');
-        const infoPanelTitle = document.getElementById('info-panel-title');
-        const infoPanelBody = document.getElementById('info-panel-body');
-        const infoPanelCloseBtn = document.getElementById('info-panel-close-btn');
-        const searchInput = document.getElementById('map-search-input');
-        const searchResults = document.getElementById('search-results');
-        
-        // Элементы фильтров
-        const filtersPanel = document.getElementById('filters-panel');
-        const toggleFiltersBtn = document.getElementById('toggle-filters-btn');
-        const typeFilter = document.getElementById('type-filter');
-        const resetFiltersBtn = document.getElementById('reset-filters-btn');
-
-        const defaultIcon = new L.Icon({
-            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-            iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-        });
-
-        var map = L.map('map', { attributionControl: false }).setView([55.75, 37.61], 10);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-        var markersData = {{ markers_data|tojson }};
-        var markersLayer = new L.FeatureGroup(); 
-        
-        // Функция для создания HTML-содержимого для всплывающего окна (popup)
-        function buildPopupHtml(details) {
-            return `
-                <div class="fw-bold">${details.name}</div>
-                <div class="text-muted small">${details.location}</div>
-                <hr class="my-1">
-                <div class="d-flex justify-content-between">
-                    <small><i class="fas fa-sitemap fa-fw me-1"></i>Отделов: <strong>${details.departments.length}</strong></small>
-                    <small><i class="fas fa-users fa-fw me-1"></i>Сотрудников: <strong>${details.total_employees}</strong></small>
-                </div>
-            `;
-        }
-
-        // Функция для создания HTML-содержимого для боковой панели
-        function buildPanelHtml(details) {
-            let photosHtml = details.photos && details.photos.length > 0 ? `<div class="info-group info-photos"><h6><i class="fas fa-camera me-2"></i>Фотографии</h6><div class="row g-2">${details.photos.map(url => `<div class="col-6"><a href="${url}" target="_blank"><img src="${url}" class="img-fluid rounded"></a></div>`).join('')}</div></div>` : '';
-            let floorPlansHtml = details.floor_plans && details.floor_plans.length > 0 ? `<div class="info-group info-photos"><h6><i class="fas fa-drafting-compass me-2"></i>Планы / Документы</h6><div class="row g-2">${details.floor_plans.map(url => { const isImage = /\.(jpe?g|png|gif)$/i.test(url); const filename = url.split('/').pop(); if (isImage) { return `<div class="col-6"><a href="${url}" target="_blank" title="${filename}"><img src="${url}" class="img-fluid rounded"></a></div>`; } else { return `<div class="col-12"><a href="${url}" target="_blank" class="list-group-item list-group-item-action"><i class="fas fa-file-pdf me-2"></i>${filename}</a></div>`; } }).join('')}</div></div>` : '';
-            
-            let departmentsHtml = details.departments && details.departments.length > 0 ? `<div class="info-group"><h6><i class="fas fa-building me-2"></i>Отделы</h6><ul>${details.departments.map(d => `<li><strong>${d.faculty || '-'} / ${d.department || '-'}:</strong> ${d.employee_count} чел.</li>`).join('')}</ul></div>` : '';
-            let contactsHtml = details.contacts && details.contacts.length > 0 ? `<div class="info-group"><h6><i class="fas fa-users me-2"></i>Контакты</h6><ul>${details.contacts.map(c => `<li><strong>${c.full_name}</strong> (${c.position || '-'})<br><small><i class="fas fa-phone fa-fw"></i> ${c.phone || '-'}</small></li>`).join('')}</ul></div>` : '';
-            
-            let buttons = [];
-            buttons.push(`<a href="${details.view_url}" class="btn btn-sm btn-info"><i class="fas fa-eye me-2"></i>Подробнее</a>`);
-            if (userPermissions.can_manage_organizations) {
-                buttons.push(`<a href="${details.edit_url}" class="btn btn-sm btn-primary" target="_blank"><i class="fas fa-edit me-2"></i>Редактировать</a>`);
-            }
-            if(details.website) {
-                buttons.push(`<a href="${details.website}" class="btn btn-sm btn-outline-secondary" target="_blank"><i class="fas fa-globe me-2"></i>Веб-сайт</a>`);
-            }
-
-            return `
-                <div class="info-group">
-                    <h6><i class="fas fa-info-circle me-2"></i>Основная информация</h6>
-                    <p><strong>Тип:</strong> ${details.org_type}</p>
-                    <p><strong>Юр. название:</strong> ${details.legal_name}</p>
-                    <p><strong>Руководитель:</strong> ${details.head_of_organization}</p>
-                    <p><strong>Телефон:</strong> ${details.main_phone}</p>
-                    <p><strong>Email:</strong> ${details.main_email}</p>
-                </div>
-                ${departmentsHtml}
-                ${contactsHtml}
-                ${photosHtml}
-                ${floorPlansHtml}
-                <div class="d-flex flex-wrap gap-2 mt-4">${buttons.join('')}</div>
-            `;
-        }
-
-        function togglePanel(show) {
-            mapColumn.className = `h-100 col-md-${show ? '8' : '12'}`;
-            infoPanelColumn.classList.toggle('d-none', !show);
-            filtersPanel.classList.add('d-none'); // Всегда скрываем фильтры при открытии панели
-            window.setTimeout(() => map.invalidateSize(), 300);
-        }
-
-        function toggleFiltersPanel(show) {
-            mapColumn.className = `h-100 col-md-${show ? '9' : '12'}`;
-            filtersPanel.classList.toggle('d-none', !show);
-            infoPanelColumn.classList.add('d-none'); // Всегда скрываем инфо-панель
-            window.setTimeout(() => map.invalidateSize(), 300);
-        }
-        
-        markersData.forEach(org => {
-            var marker = L.marker([org.lat, org.lon], { icon: defaultIcon, markerData: org });
-            marker.bindPopup(buildPopupHtml(org.details), { minWidth: 280 });
-            marker.bindTooltip(org.name);
-            marker.on('click', () => {
-                infoPanelTitle.textContent = org.details.name;
-                infoPanelBody.innerHTML = buildPanelHtml(org.details);
-                togglePanel(true);
-            });
-            markersLayer.addLayer(marker);
-        });
-
-        map.addLayer(markersLayer);
-        if (Object.keys(markersLayer.getLayers()).length > 0) {
-            map.fitBounds(markersLayer.getBounds().pad(0.1));
-        }
-
-        infoPanelCloseBtn.addEventListener('click', () => togglePanel(false));
-        toggleFiltersBtn.addEventListener('click', () => toggleFiltersPanel(filtersPanel.classList.contains('d-none')));
-
-        searchInput.addEventListener('input', e => {
-            const query = e.target.value.trim().toLowerCase();
-            searchResults.innerHTML = '';
-            if (query.length < 2) { searchResults.style.display = 'none'; return; }
-            const filtered = markersData.filter(m => m.name.toLowerCase().includes(query) || m.details.location.toLowerCase().includes(query));
-            if (filtered.length > 0) {
-                filtered.slice(0, 10).forEach(markerData => {
-                    const item = document.createElement('a');
-                    item.className = 'list-group-item list-group-item-action';
-                    item.innerHTML = `${markerData.name} <small class="text-muted d-block">${markerData.details.location}</small>`;
-                    item.addEventListener('click', evt => {
-                        evt.preventDefault();
-                        map.setView([markerData.lat, markerData.lon], 17);
-                        markersLayer.eachLayer(layer => {
-                            if (layer.options.markerData.id === markerData.id) {
-                                layer.openPopup();
-                                infoPanelTitle.textContent = markerData.details.name;
-                                infoPanelBody.innerHTML = buildPanelHtml(markerData.details);
-                                togglePanel(true);
-                            }
-                        });
-                        searchInput.value = '';
-                        searchResults.style.display = 'none';
-                    });
-                    searchResults.appendChild(item);
-                });
-                searchResults.style.display = 'block';
-            } else { searchResults.style.display = 'none'; }
-        });
-        
-        searchInput.addEventListener('focusout', () => setTimeout(() => { searchResults.style.display = 'none'; }, 200));
-
-        function applyFilters() {
-            const selectedType = typeFilter.value;
-
-            markersLayer.eachLayer(layer => {
-                const data = layer.options.markerData.filter_data;
-                let visible = true;
-                if (selectedType !== 'all' && data.org_type !== selectedType) { visible = false; }
-                if (visible) { map.addLayer(layer); } else { map.removeLayer(layer); }
-            });
-        }
-        
-        typeFilter.addEventListener('change', applyFilters);
-
-        resetFiltersBtn.addEventListener('click', () => {
-            typeFilter.value = 'all';
-            applyFilters();
-        });
-    });
-</script>
 {% endblock %}
