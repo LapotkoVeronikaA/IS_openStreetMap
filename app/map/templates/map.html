@@ -1,4 +1,3 @@
-<!-- map.html -->
 {% extends "base.html" %}
 
 {% block title %}Интерактивная карта{% endblock %}
@@ -10,8 +9,9 @@
 {% block extra_css %}
 <!-- Leaflet CSS -->
 <link rel="stylesheet" href="{{ url_for('static', filename='leaflet.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='MarkerCluster.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='MarkerCluster.Default.css') }}" />
+<!-- Leaflet MarkerCluster CSS (CDN) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
 
 <style>
     .map-main-container { height: 80vh; width: 100%; }
@@ -63,6 +63,19 @@
         border-bottom: 1px solid #f1f5f9;
     }
     .panel-list-item:last-child { border-bottom: none; }
+    
+    /* Поиск */
+    #search-wrapper { position: relative; z-index: 990; }
+    #search-results {
+        position: absolute; top: 100%; left: 0; right: 0;
+        max-height: 300px; overflow-y: auto; background-color: #fff;
+        border: 1px solid #dee2e6; border-radius: 0 0 .375rem .375rem;
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+    }
+    #search-results .list-group-item { cursor: pointer; }
+    #search-results .list-group-item:hover { background-color: #f8f9fa; }
+
+    #filters-panel { height: 100%; background-color: #f8f9fa; border-left: 1px solid #dee2e6; }
 </style>
 {% endblock %}
 
@@ -106,6 +119,12 @@
                         </select>
                     </div>
                     <button id="reset-filters-btn" class="btn btn-sm btn-outline-secondary w-100">Сбросить фильтры</button>
+                    
+                    <hr>
+                    <div class="alert alert-info small">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Используйте поиск сверху для быстрого перехода к объекту.
+                    </div>
                 </div>
             </div>
 
@@ -146,4 +165,205 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='leaflet.js') }}"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const userPermissions = {{ user_perms|tojson }};
+        const mapColumn = document.getElementById('map-column');
+        const infoPanelColumn = document.getElementById('info-panel-column');
+        
+        const paneGeneral = document.getElementById('general');
+        const paneStructure = document.getElementById('structure');
+        const paneContacts = document.getElementById('contacts');
+        
+        const infoPanelTitle = document.getElementById('info-panel-title');
+        const infoPanelSubtitle = document.getElementById('info-panel-subtitle');
+        const infoPanelFooter = document.getElementById('info-panel-footer');
+
+        const defaultIcon = new L.Icon({
+            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+            iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+        });
+
+        var map = L.map('map', { attributionControl: false }).setView([55.75, 37.61], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        var markersData = {{ markers_data|tojson }};
+        
+        var markersClusterGroup = L.markerClusterGroup({
+            spiderfyOnMaxZoom: true,
+            showCoverageOnHover: false,
+            zoomToBoundsOnClick: true,
+            maxClusterRadius: 50
+        });
+
+        var allLeafletMarkers = [];
+
+        function populatePanel(d) {
+            infoPanelTitle.textContent = d.name;
+            infoPanelSubtitle.textContent = d.location || '';
+            
+            // 1. General Tab
+            let generalHtml = `
+                <table class="table table-borderless table-sm mt-2">
+                    <tr><td class="text-muted w-25">Тип:</td><td><span class="badge bg-secondary">${d.org_type || '-'}</span></td></tr>
+                    <tr><td class="text-muted">Руководитель:</td><td>${d.head_of_organization || '-'}</td></tr>
+                    <tr><td class="text-muted">Телефон:</td><td>${d.main_phone || '-'}</td></tr>
+                    <tr><td class="text-muted">Email:</td><td>${d.main_email ? `<a href="mailto:${d.main_email}">${d.main_email}</a>` : '-'}</td></tr>
+                    <tr><td class="text-muted">Сайт:</td><td>${d.website ? `<a href="${d.website}" target="_blank">Перейти</a>` : '-'}</td></tr>
+                </table>
+            `;
+            if (d.photos && d.photos.length > 0) {
+                generalHtml += `<h6 class="mt-3 border-bottom pb-1">Фотографии</h6><div class="row g-2 mb-2">
+                    ${d.photos.map(url => `<div class="col-6"><a href="${url}" target="_blank"><img src="${url}" class="img-fluid rounded border"></a></div>`).join('')}
+                </div>`;
+            }
+            if (d.floor_plans && d.floor_plans.length > 0) {
+                 generalHtml += `<h6 class="mt-3 border-bottom pb-1">Документы</h6><ul class="list-unstyled small">
+                    ${d.floor_plans.map(url => `<li><a href="${url}" target="_blank"><i class="fas fa-file-alt me-2"></i>Файл</a></li>`).join('')}
+                </ul>`;
+            }
+            paneGeneral.innerHTML = generalHtml;
+
+            // 2. Structure Tab
+            if (d.departments && d.departments.length > 0) {
+                paneStructure.innerHTML = `<div class="alert alert-light border mt-2">В составе организации:</div><ul class="list-group list-group-flush">
+                    ${d.departments.map(child => `
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <div>
+                                <div class="fw-bold">${child.name}</div>
+                                <small class="text-muted">${child.org_type || ''}</small>
+                            </div>
+                        </li>
+                    `).join('')}
+                </ul>`;
+            } else {
+                paneStructure.innerHTML = '<div class="alert alert-secondary mt-3">Нет вложенных структурных подразделений.</div>';
+            }
+
+            // 3. Contacts Tab
+            if (d.contacts && d.contacts.length > 0) {
+                paneContacts.innerHTML = `<ul class="list-unstyled mt-2">
+                    ${d.contacts.map(c => `
+                        <li class="panel-list-item">
+                            <div class="fw-bold">${c.full_name}</div>
+                            <div class="small text-muted">${c.position || ''}</div>
+                            ${c.phone ? `<div class="small"><i class="fas fa-phone fa-fw text-muted"></i> ${c.phone}</div>` : ''}
+                        </li>
+                    `).join('')}
+                </ul>`;
+            } else {
+                paneContacts.innerHTML = '<div class="alert alert-secondary mt-3">Информация о сотрудниках отсутствует.</div>';
+            }
+
+            let footerHtml = `
+                <div class="d-grid gap-2">
+                    <div class="btn-group" role="group">
+                        <a href="${d.export_docx_url}" class="btn btn-sm btn-outline-success"><i class="fas fa-file-word me-1"></i>Отчет (Word)</a>
+                        <a href="${d.export_xlsx_url}" class="btn btn-sm btn-outline-success"><i class="fas fa-file-excel me-1"></i>Отчет (Excel)</a>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="${d.view_url}" class="btn btn-sm btn-primary flex-grow-1">Открыть карточку</a>
+                        ${userPermissions.can_manage_organizations ? `<a href="${d.edit_url}" class="btn btn-sm btn-outline-secondary">Ред.</a>` : ''}
+                    </div>
+                </div>
+            `;
+            infoPanelFooter.innerHTML = footerHtml;
+        }
+
+        function togglePanel(show) {
+            mapColumn.className = `h-100 col-md-${show ? '8' : '12'}`;
+            infoPanelColumn.classList.toggle('d-none', !show);
+            document.getElementById('filters-panel').classList.add('d-none');
+            setTimeout(() => map.invalidateSize(), 300);
+        }
+
+        markersData.forEach(org => {
+            var marker = L.marker([org.lat, org.lon], { icon: defaultIcon });
+            marker.customData = org;
+
+            marker.bindPopup(`
+                <div class="text-center">
+                    <strong>${org.name}</strong><br>
+                    <small>${org.details.location}</small>
+                </div>
+            `);
+
+            marker.on('click', () => {
+                populatePanel(org.details);
+                togglePanel(true);
+            });
+            
+            allLeafletMarkers.push(marker);
+            markersClusterGroup.addLayer(marker);
+        });
+
+        map.addLayer(markersClusterGroup);
+        if (allLeafletMarkers.length > 0) {
+            map.fitBounds(markersClusterGroup.getBounds().pad(0.1));
+        }
+
+        document.getElementById('info-panel-close-btn').addEventListener('click', () => togglePanel(false));
+        document.getElementById('toggle-filters-btn').addEventListener('click', () => {
+            document.getElementById('filters-panel').classList.toggle('d-none');
+            infoPanelColumn.classList.add('d-none');
+            mapColumn.className = document.getElementById('filters-panel').classList.contains('d-none') ? 'col-md-12 h-100' : 'col-md-9 h-100';
+            setTimeout(() => map.invalidateSize(), 300);
+        });
+        
+        const searchInput = document.getElementById('map-search-input');
+        const searchResults = document.getElementById('search-results');
+        
+        searchInput.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            if(val.length < 2) { searchResults.style.display = 'none'; return; }
+            const matches = markersData.filter(m => m.name.toLowerCase().includes(val));
+            searchResults.innerHTML = '';
+            matches.slice(0, 10).forEach(m => {
+                const li = document.createElement('a');
+                li.className = 'list-group-item list-group-item-action';
+                li.innerHTML = `<strong>${m.name}</strong><br><small class="text-muted">${m.details.location}</small>`;
+                li.onclick = () => {
+                    map.setView([m.lat, m.lon], 18);
+                    populatePanel(m.details);
+                    togglePanel(true);
+                    searchResults.style.display = 'none';
+                    
+                    markersClusterGroup.zoomToShowLayer(allLeafletMarkers.find(lm => lm.customData.id === m.id), function() {
+                        const targetMarker = allLeafletMarkers.find(lm => lm.customData.id === m.id);
+                        if(targetMarker) targetMarker.openPopup();
+                    });
+                };
+                searchResults.appendChild(li);
+            });
+            searchResults.style.display = matches.length ? 'block' : 'none';
+        });
+
+        const typeFilter = document.getElementById('type-filter');
+        const resetFiltersBtn = document.getElementById('reset-filters-btn');
+
+        function applyFilters() {
+            const selectedType = typeFilter.value;
+            markersClusterGroup.clearLayers();
+            allLeafletMarkers.forEach(marker => {
+                const data = marker.customData.filter_data;
+                let visible = true;
+                if (selectedType !== 'all' && data.org_type !== selectedType) { visible = false; }
+                if (visible) { markersClusterGroup.addLayer(marker); }
+            });
+        }
+
+        typeFilter.addEventListener('change', applyFilters);
+        resetFiltersBtn.addEventListener('click', () => {
+            typeFilter.value = 'all';
+            applyFilters();
+        });
+    });
+</script>
 {% endblock %}

@@ -18,24 +18,27 @@ def api_key_required(f):
 @api_key_required
 def get_organizations():
     """
-    Возвращает список всех организаций из реестра.
+    Возвращает список всех организаций из реестра с учетом иерархии и новых полей.
     """
     try:
-        orgs = Organization.query.order_by(Organization.name).all()
+        orgs = Organization.query.order_by(Organization.id).all()
         
         results = []
         for org in orgs:
             results.append({
                 'id': org.id,
+                'parent_id': org.parent_id, # Передаем ID родителя для 1С
                 'name': org.name,
+                'legal_name': org.legal_name,
                 'type': org.org_type,
                 'location': org.location,
                 'head_of_organization': org.head_of_organization,
+                'head_position': org.head_position,
                 'latitude': org.latitude,
                 'longitude': org.longitude,
+                'website': org.website_url,
                 'contacts': org.get_contacts(),
-                'departments': org.get_departments(),
-                'website': org.website
+                'notes': org.notes
             })
             
         return jsonify(results)
@@ -47,11 +50,9 @@ def get_organizations():
 @api_bp.route('/v1/users-groups', methods=['GET'])
 @api_key_required
 def get_users_and_groups():
-    """Возвращает список групп, а затем пользователей."""
     try:
         groups = Group.query.all()
         users = User.query.all()
-
         groups_data = [{'id': g.id, 'name': g.name} for g in groups]
         users_data = [{
             'id': u.id,
@@ -61,11 +62,7 @@ def get_users_and_groups():
             'position': u.position,
             'group_name': u.group.name if u.group else None
         } for u in users]
-
-        return jsonify({
-            'groups': groups_data,
-            'users': users_data
-        })
+        return jsonify({'groups': groups_data, 'users': users_data})
     except Exception as e:
         current_app.logger.error(f"API Error in get_users_and_groups: {e}")
         return jsonify({'message': 'Внутренняя ошибка сервера'}), 500
@@ -73,14 +70,9 @@ def get_users_and_groups():
 @api_bp.route('/v1/generic-directory-items', methods=['GET'])
 @api_key_required
 def get_generic_directory_items():
-    """Возвращает все элементы общих справочников."""
     try:
         items = GenericDirectoryItem.query.all()
-        items_data = [{
-            'id': item.id,
-            'directory_type': item.directory_type,
-            'name': item.name
-        } for item in items]
+        items_data = [{'id': item.id, 'directory_type': item.directory_type, 'name': item.name} for item in items]
         return jsonify(items_data)
     except Exception as e:
         current_app.logger.error(f"API Error in get_generic_directory_items: {e}")

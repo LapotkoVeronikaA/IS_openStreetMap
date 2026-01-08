@@ -57,7 +57,7 @@ def show_map():
                 'photos': get_files_for_org(org.id, 'photos'),
                 'floor_plans': get_files_for_org(org.id, 'floor_plans'),
                 
-                # ссылки для интерфейса (включая отчеты)
+                # ССЫЛКИ ДЛЯ ИНТЕРФЕЙСА (включая отчеты)
                 'edit_url': url_for('organizations.edit_org', org_id=org.id),
                 'view_url': url_for('organizations.view_org', org_id=org.id),
                 'export_docx_url': url_for('organizations.export_docx', org_id=org.id),

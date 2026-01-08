@@ -1,4 +1,3 @@
-<!-- organizations_index.html -->
 {% extends "base.html" %}
 
 {% block title %}Реестр организаций{% endblock %}
@@ -139,3 +138,22 @@
     {% endif %}
 </li>
 {% endmacro %}
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll('.tree-ul.collapse').forEach(el => {
+        el.addEventListener('show.bs.collapse', e => {
+            e.stopPropagation();
+            const icon = e.target.parentElement.querySelector('.toggle-icon i');
+            if(icon) icon.classList.replace('fa-plus-square', 'fa-minus-square');
+        });
+        el.addEventListener('hide.bs.collapse', e => {
+            e.stopPropagation();
+            const icon = e.target.parentElement.querySelector('.toggle-icon i');
+            if(icon) icon.classList.replace('fa-minus-square', 'fa-plus-square');
+        });
+    });
+    function expandAll() { document.querySelectorAll('.tree-ul.collapse').forEach(el => new bootstrap.Collapse(el, {show: true})); }
+    function collapseAll() { document.querySelectorAll('.tree-ul.collapse.show').forEach(el => new bootstrap.Collapse(el, {hide: true})); }
+</script>
+{% endblock %}
