@@ -36,18 +36,16 @@
                         <input type="text" name="name" class="form-control" value="{{ org.name if org else '' }}" required placeholder="Например: Кафедра ИТ">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-bold">Тип</label>
-                        <input type="text" name="org_type" class="form-control" value="{{ org.org_type if org else '' }}" list="typeOptions" placeholder="Филиал, Кафедра...">
-                        <datalist id="typeOptions">
-                            <option value="Университет">
-                            <option value="Филиал">
-                            <option value="Факультет">
-                            <option value="Кафедра">
-                            <option value="Департамент">
-                            <option value="Отдел">
-                            <option value="Управление">
-                            <option value="Лаборатория">
-                        </datalist>
+                        <label class="form-label fw-bold">Тип объекта</label>
+                        <select name="org_type" class="form-select" required>
+                            <option value="" disabled {% if not org or not org.org_type %}selected{% endif %}>-- Выберите тип --</option>
+                            {% for t in organization_types %}
+                            <option value="{{ t.name }}" {% if org and org.org_type == t.name %}selected{% endif %}>
+                                {{ t.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Управляется в <a href="{{ url_for('generic_directory.index') }}" target="_blank">справочниках</a></div>
                     </div>
 
                     <div class="col-12">

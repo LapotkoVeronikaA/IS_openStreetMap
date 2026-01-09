@@ -37,18 +37,15 @@ def sanitize_filename(text):
 @organizations_bp.route('/')
 @permission_required_manual('view_organizations')
 def index():
-    # Параметры поиска и фильтрации
     query = request.args.get('q', '').strip()
     org_type = request.args.get('type', '').strip()
     
-    # Справочник типов для фильтра
     all_types = db.session.query(Organization.org_type).distinct().all()
     all_types = [t[0] for t in all_types if t[0]]
 
     is_searching = any([query, org_type])
 
     if is_searching:
-        # Умный поиск по нескольким полям
         search_filter = Organization.query
         if query:
             search_filter = search_filter.filter(or_(
@@ -64,14 +61,12 @@ def index():
         results = search_filter.order_by(Organization.name).all()
         return render_template('organizations_index.html', results=results, is_searching=True, all_types=all_types)
     
-    # Если поиска нет — показываем дерево
     root_orgs = Organization.query.filter_by(parent_id=None).order_by(Organization.name).all()
     return render_template('organizations_index.html', root_orgs=root_orgs, is_searching=False, all_types=all_types)
 
 @organizations_bp.route('/export/search_results')
 @permission_required_manual('view_organizations')
 def export_search_results():
-    """Экспорт результатов текущего поиска в Excel."""
     query = request.args.get('q', '').strip()
     org_type = request.args.get('type', '').strip()
 
@@ -118,7 +113,8 @@ def view_org(org_id):
 @permission_required_manual('manage_organizations')
 def add_org():
     all_orgs = Organization.query.order_by(Organization.name).all()
-    organization_types = GenericDirectoryItem.query.filter_by(directory_type='organization_types').all()
+    # Получаем типы из нового справочника
+    organization_types = GenericDirectoryItem.query.filter_by(directory_type='org_type').order_by(GenericDirectoryItem.name).all()
 
     if request.method == 'POST':
         name = request.form.get('name')
@@ -175,7 +171,8 @@ def add_org():
 def edit_org(org_id):
     org = Organization.query.get_or_404(org_id)
     all_orgs = Organization.query.filter(Organization.id != org_id).order_by(Organization.name).all()
-    organization_types = GenericDirectoryItem.query.filter_by(directory_type='organization_types').all()
+    # Получаем типы из нового справочника
+    organization_types = GenericDirectoryItem.query.filter_by(directory_type='org_type').order_by(GenericDirectoryItem.name).all()
 
     if request.method == 'POST':
         org.name = request.form.get('name')

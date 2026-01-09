@@ -8,35 +8,20 @@ from . import generic_directory_bp
 
 # === КОНФИГУРАЦИЯ СПРАВОЧНИКОВ ===
 DIRECTORY_CONFIG = {
-    'organization_types': {
+    'org_type': {
         'name': 'Типы организаций',
-        'icon': 'fa-building-columns'
-    },
-    'faculty_names': {
-        'name': 'Факультеты / Управления',
-        'icon': 'fa-university'
-    },
-    'department_names': {
-        'name': 'Отделы / Кафедры',
-        'icon': 'fa-users-cog'
-    },
-    'district_names': {
-        'name': 'Округа',
-        'icon': 'fa-map-pin'
-    },
+        'icon': 'fa-tags'
+    }
 }
 
 @generic_directory_bp.route('/')
 @permission_required_manual('manage_organizations')
 def index():
-    """Отображает страницу со всеми общими справочниками."""
-    all_items = GenericDirectoryItem.query.order_by(func.lower(GenericDirectoryItem.name)).all()
+    """Отображает страницу управления справочником типов."""
+    all_items = GenericDirectoryItem.query.filter_by(directory_type='org_type').order_by(func.lower(GenericDirectoryItem.name)).all()
     
-    # Группируем элементы по типу справочника
-    directories = {dir_type: [] for dir_type in DIRECTORY_CONFIG.keys()}
-    for item in all_items:
-        if item.directory_type in directories:
-            directories[item.directory_type].append(item)
+    # Группируем для шаблона
+    directories = {'org_type': all_items}
             
     return render_template(
         'generic_directories_index.html', 
@@ -47,22 +32,18 @@ def index():
 @generic_directory_bp.route('/add', methods=['POST'])
 @permission_required_manual('manage_organizations')
 def add_item():
-    """Добавляет новый элемент в справочник."""
-    dir_type = request.form.get('directory_type')
+    """Добавляет новый тип в справочник."""
+    dir_type = 'org_type'
     name = request.form.get('name', '').strip()
 
-    if not all([dir_type, name]):
-        flash('Необходимо указать тип справочника и название элемента.', 'danger')
-        return redirect(url_for('generic_directory.index'))
-
-    if dir_type not in DIRECTORY_CONFIG:
-        flash('Указан неверный тип справочника.', 'danger')
+    if not name:
+        flash('Необходимо указать название типа.', 'danger')
         return redirect(url_for('generic_directory.index'))
 
     # Проверка на дубликат
     existing = GenericDirectoryItem.query.filter_by(directory_type=dir_type, name=name).first()
     if existing:
-        flash(f'Элемент "{name}" уже существует в справочнике "{DIRECTORY_CONFIG[dir_type]["name"]}".', 'warning')
+        flash(f'Тип "{name}" уже существует в справочнике.', 'warning')
         return redirect(url_for('generic_directory.index'))
         
     try:
@@ -70,68 +51,67 @@ def add_item():
         db.session.add(new_item)
         db.session.commit()
         log_user_activity(
-            f"Добавлен элемент в справочник '{DIRECTORY_CONFIG[dir_type]['name']}': {name}",
+            f"Добавлен новый тип организации: {name}",
             "GenericDirectory", new_item.id
         )
-        flash('Элемент успешно добавлен.', 'success')
+        flash('Новый тип успешно добавлен.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Ошибка при добавлении элемента: {e}', 'danger')
+        flash(f'Ошибка при добавлении: {e}', 'danger')
 
     return redirect(url_for('generic_directory.index'))
 
 @generic_directory_bp.route('/edit/<int:item_id>', methods=['POST'])
 @permission_required_manual('manage_organizations')
 def edit_item(item_id):
-    """Редактирует существующий элемент справочника."""
+    """Редактирует существующий тип."""
     item = GenericDirectoryItem.query.get_or_404(item_id)
     old_name = item.name
     new_name = request.form.get('name', '').strip()
 
     if not new_name:
-        flash('Название элемента не может быть пустым.', 'danger')
+        flash('Название не может быть пустым.', 'danger')
         return redirect(url_for('generic_directory.index'))
 
-    # Проверка на дубликат (исключая сам редактируемый элемент)
     existing = GenericDirectoryItem.query.filter(
-        GenericDirectoryItem.directory_type == item.directory_type,
+        GenericDirectoryItem.directory_type == 'org_type',
         GenericDirectoryItem.name == new_name,
         GenericDirectoryItem.id != item_id
     ).first()
 
     if existing:
-        flash(f'Элемент "{new_name}" уже существует в этом справочнике.', 'warning')
+        flash(f'Тип "{new_name}" уже существует.', 'warning')
         return redirect(url_for('generic_directory.index'))
 
     try:
         item.name = new_name
         db.session.commit()
         log_user_activity(
-            f"Изменен элемент в справочнике '{DIRECTORY_CONFIG[item.directory_type]['name']}'",
+            f"Изменено название типа организации",
             "GenericDirectory", item.id,
             details_dict={'name': {'old': old_name, 'new': new_name}}
         )
-        flash('Элемент успешно обновлен.', 'success')
+        flash('Тип успешно обновлен.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Ошибка при обновлении элемента: {e}', 'danger')
+        flash(f'Ошибка при обновлении: {e}', 'danger')
         
     return redirect(url_for('generic_directory.index'))
 
 @generic_directory_bp.route('/delete/<int:item_id>', methods=['POST'])
 @permission_required_manual('manage_organizations')
 def delete_item(item_id):
-    """Удаляет элемент из справочника."""
+    """Удаляет тип из справочника."""
     item = GenericDirectoryItem.query.get_or_404(item_id)
-    item_name, dir_name = item.name, DIRECTORY_CONFIG[item.directory_type]['name']
+    item_name = item.name
     
     try:
         db.session.delete(item)
         db.session.commit()
-        log_user_activity(f"Удален элемент из справочника '{dir_name}': {item_name}", "GenericDirectory", item_id)
-        flash(f'Элемент "{item_name}" успешно удален.', 'success')
+        log_user_activity(f"Удален тип организации: {item_name}", "GenericDirectory", item_id)
+        flash(f'Тип "{item_name}" удален.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Ошибка при удалении элемента: {e}', 'danger')
+        flash(f'Ошибка при удалении: {e}', 'danger')
         
     return redirect(url_for('generic_directory.index'))
