@@ -1,9 +1,10 @@
 # app/main/routes.py
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from app.extensions import db
-from app.models import Feedback, News
+from app.models import Feedback, News, Organization
 from app.utils import get_current_user_obj, permission_required_manual, log_user_activity
 from . import main_bp
+from sqlalchemy import func
 
 @main_bp.route('/')
 def dashboard():
@@ -12,6 +13,22 @@ def dashboard():
 @main_bp.route('/about')
 def about():
     return render_template('about.html')
+
+@main_bp.route('/university')
+def university():
+    """Страница 'Об университете'"""
+    return render_template('university.html')
+
+@main_bp.route('/analytics')
+def analytics():
+    """Страница 'Аналитика'"""
+    # Сбор базовой статистики для отображения
+    stats = {
+        'total_orgs': Organization.query.count(),
+        'by_type': db.session.query(Organization.org_type, func.count(Organization.id)).group_by(Organization.org_type).all(),
+        'total_news': News.query.count()
+    }
+    return render_template('analytics.html', stats=stats)
 
 @main_bp.route('/news')
 def news_list():
@@ -113,7 +130,7 @@ def help_page():
     return render_template('help.html')
 
 @main_bp.route('/feedback')
-@permission_required_manual('manage_users') # Только админы могут смотреть
+@permission_required_manual('manage_users') 
 def view_feedback():
     page = request.args.get('page', 1, type=int)
     feedback_items = Feedback.query.order_by(Feedback.created_at.desc()).paginate(page=page, per_page=15, error_out=False)

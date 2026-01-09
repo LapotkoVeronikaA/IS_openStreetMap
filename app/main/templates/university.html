@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Об университете{% endblock %}
+
+{% block breadcrumbs %}
+  {{ breadcrumbs([('Об университете', '#')]) }}
+{% endblock %}
+
+{% block content %}
+<div class="card-modern p-4 p-md-5">
+    <div class="row align-items-center mb-5">
+        <div class="col-lg-8">
+            <h2 class="h2 mb-4">Московский университет имени С.Ю. Витте</h2>
+            <p class="lead text-primary fw-bold">Один из первых негосударственных вузов России, ведущий свою историю с 1993 года.</p>
+            <p>Университет назван в честь выдающегося российского государственного деятеля Сергея Юльевича Витте, чьи реформы заложили фундамент промышленного и финансового развития России начала XX века.</p>
+        </div>
+        <div class="col-lg-4 text-center">
+            <i class="fas fa-graduation-cap fa-10x text-light"></i>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="p-4 border rounded bg-light h-100 text-center">
+                <i class="fas fa-history fa-2x mb-3 text-secondary"></i>
+                <h4 class="h5">30 лет опыта</h4>
+                <p class="small text-muted mb-0">Стабильное развитие и тысячи успешных выпускников по всей стране.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="p-4 border rounded bg-light h-100 text-center">
+                <i class="fas fa-award fa-2x mb-3 text-secondary"></i>
+                <h4 class="h5">Аккредитация</h4>
+                <p class="small text-muted mb-0">Полная государственная аккредитация всех образовательных программ.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="p-4 border rounded bg-light h-100 text-center">
+                <i class="fas fa-globe-americas fa-2x mb-3 text-secondary"></i>
+                <h4 class="h5">Филиальная сеть</h4>
+                <p class="small text-muted mb-0">Наличие филиалов в регионах России и развитая система онлайн-обучения.</p>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="h4 mb-3 border-bottom pb-2">Наша миссия</h3>
+    <p>Подготовка высококвалифицированных специалистов, обладающих современными компетенциями и способных эффективно работать в условиях цифровой экономики. Мы объединяем академические традиции и инновационные образовательные технологии.</p>
+    
+    <div class="alert alert-info mt-4">
+        <i class="fas fa-info-circle me-2"></i> Данная информационная система (Реестр МУИВ) создана для автоматизации организационной структуры университета и визуализации данных на интерактивной карте.
+    </div>
+</div>
+{% endblock %}

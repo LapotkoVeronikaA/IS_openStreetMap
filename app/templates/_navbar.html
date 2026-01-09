@@ -29,6 +29,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('main.analytics') }}">
+                        <i class="fas fa-chart-line me-2"></i>Аналитика
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('main.news_list') }}">
                         <i class="fas fa-newspaper me-2"></i>Новости
                     </a>
@@ -62,15 +67,19 @@
                 </li>
                 {% endif %}
 
-                <!-- Группировка информационных ссылок === -->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-info-circle me-2"></i>Информация
                     </a>
                     <ul class="dropdown-menu">
                         <li>
+                            <a class="dropdown-item" href="{{ url_for('main.university') }}">
+                                <i class="fas fa-graduation-cap fa-fw me-2"></i>Об университете
+                            </a>
+                        </li>
+                        <li>
                             <a class="dropdown-item" href="{{ url_for('main.about') }}">
-                                <i class="fas fa-info-circle fa-fw me-2"></i>О проекте
+                                <i class="fas fa-info-circle fa-fw me-2"></i>О проекте реестра
                             </a>
                         </li>
                         <li>
@@ -89,7 +98,6 @@
 
             <ul class="navbar-nav ms-auto">
                 {% if current_user_obj() %}
-                <!-- Меню пользователя -->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button"
                         data-bs-toggle="dropdown">
@@ -113,7 +121,6 @@
                     </ul>
                 </li>
                 {% else %}
-                <!-- Гостевое меню -->
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('auth.login') }}">
                         <i class="fas fa-sign-in-alt me-2"></i>Войти
@@ -124,15 +131,3 @@
         </div>
     </div>
 </nav>
-
-{% if current_user_obj() %}
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Инициализируем все tooltip на странице
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
-</script>
-{% endif %}
