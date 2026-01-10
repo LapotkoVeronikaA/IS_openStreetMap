@@ -1,10 +1,13 @@
 # app/main/routes.py
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+import os
+import uuid
+from flask import render_template, redirect, url_for, request, flash, current_app
 from app.extensions import db
 from app.models import Feedback, News, Organization
-from app.utils import get_current_user_obj, permission_required_manual, log_user_activity
+from app.utils import get_current_user_obj, permission_required_manual, log_user_activity, check_user_permission
 from . import main_bp
 from sqlalchemy import func
+from werkzeug.utils import secure_filename
 
 @main_bp.route('/')
 def dashboard():
@@ -14,15 +17,55 @@ def dashboard():
 def about():
     return render_template('about.html')
 
-@main_bp.route('/university')
+@main_bp.route('/university', methods=['GET', 'POST'])
 def university():
-    """Страница 'Об университете'"""
-    return render_template('university.html')
+    """Страница 'Об университете' с возможностью загрузки PDF-документов для админов"""
+    upload_path = os.path.join(current_app.static_folder, 'uploads', 'university')
+    
+    if not os.path.exists(upload_path):
+        os.makedirs(upload_path)
+
+    if request.method == 'POST' and check_user_permission('manage_organizations'):
+        file = request.files.get('doc_file')
+        doc_name = request.form.get('doc_name')
+        
+        if file and file.filename.lower().endswith('.pdf'):
+            filename = secure_filename(f"{doc_name}_{uuid.uuid4().hex[:8]}.pdf")
+            file.save(os.path.join(upload_path, filename))
+            log_user_activity(f"Загружен официальный документ: {doc_name}", "UniversityDoc")
+            flash(f'Документ "{doc_name}" успешно загружен.', 'success')
+            return redirect(url_for('main.university'))
+        else:
+            flash('Ошибка: допускаются только файлы в формате PDF.', 'danger')
+
+    documents = []
+    if os.path.exists(upload_path):
+        for filename in sorted(os.listdir(upload_path)):
+            if filename.endswith('.pdf'):
+                # до первого подчеркивания
+                display_name = filename.rsplit('_', 1)[0]
+                documents.append({
+                    'filename': filename,
+                    'name': display_name,
+                    'url': url_for('static', filename=f'uploads/university/{filename}')
+                })
+
+    return render_template('university.html', documents=documents)
+
+@main_bp.route('/university/delete-doc/<string:filename>', methods=['POST'])
+@permission_required_manual('manage_organizations')
+def delete_university_doc(filename):
+    """Удаление документа университета"""
+    file_path = os.path.join(current_app.static_folder, 'uploads', 'university', filename)
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        log_user_activity(f"Удален официальный документ: {filename}", "UniversityDoc")
+        flash('Документ удален.', 'info')
+    return redirect(url_for('main.university'))
 
 @main_bp.route('/analytics')
 def analytics():
     """Страница 'Аналитика'"""
-    # Сбор базовой статистики для отображения
     stats = {
         'total_orgs': Organization.query.count(),
         'by_type': db.session.query(Organization.org_type, func.count(Organization.id)).group_by(Organization.org_type).all(),
@@ -94,7 +137,6 @@ def delete_news(news_id):
     log_user_activity(f"Удалена новость: '{title}'", "News", news_id)
     flash('Новость успешно удалена.', 'success')
     return redirect(url_for('main.news_list'))
-
 
 @main_bp.route('/contacts', methods=['GET', 'POST'])
 def contacts():

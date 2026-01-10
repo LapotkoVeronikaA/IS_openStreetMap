@@ -46,8 +46,65 @@
     <h3 class="h4 mb-3 border-bottom pb-2">Наша миссия</h3>
     <p>Подготовка высококвалифицированных специалистов, обладающих современными компетенциями и способных эффективно работать в условиях цифровой экономики. Мы объединяем академические традиции и инновационные образовательные технологии.</p>
     
-    <div class="alert alert-info mt-4">
-        <i class="fas fa-info-circle me-2"></i> Данная информационная система (Реестр МУИВ) создана для автоматизации организационной структуры университета и визуализации данных на интерактивной карте.
+    <!-- РАЗДЕЛ ДОКУМЕНТОВ -->
+    <div class="mt-5">
+        <h3 class="h4 mb-4"><i class="fas fa-file-pdf me-2 text-danger"></i>Официальные документы</h3>
+        
+        <div class="row g-3">
+            {% for doc in documents %}
+            <div class="col-md-6 col-lg-4">
+                <div class="d-flex align-items-center p-3 border rounded bg-white shadow-sm h-100">
+                    <i class="fas fa-file-pdf fa-2x text-danger me-3"></i>
+                    <div class="flex-grow-1 overflow-hidden">
+                        <a href="{{ doc.url }}" target="_blank" class="text-decoration-none text-dark fw-bold d-block text-truncate">
+                            {{ doc.name }}
+                        </a>
+                        <small class="text-muted text-uppercase" style="font-size: 0.7rem;">PDF Документ</small>
+                    </div>
+                    {% if check_user_permission('manage_organizations') %}
+                    <form action="{{ url_for('main.delete_university_doc', filename=doc.filename) }}" method="POST" class="ms-2">
+                        <button type="submit" class="btn btn-link text-danger p-0" onclick="return confirm('Удалить этот документ?')">
+                            <i class="fas fa-times-circle"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <p class="text-muted italic">Список официальных документов пуст.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Форма загрузки для админов -->
+        {% if check_user_permission('manage_organizations') %}
+        <div class="mt-4 p-4 border rounded bg-light border-dashed">
+            <h5 class="h6 mb-3"><i class="fas fa-upload me-2"></i>Загрузить новый документ (Администрирование)</h5>
+            <form method="POST" enctype="multipart/form-data" class="row g-3">
+                <div class="col-md-6">
+                    <input type="text" name="doc_name" class="form-control" placeholder="Название (например, Лицензия 2023)" required>
+                </div>
+                <div class="col-md-4">
+                    <input type="file" name="doc_file" class="form-control" accept=".pdf" required>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Загрузить</button>
+                </div>
+                <div class="col-12">
+                    <small class="text-muted">Разрешены только PDF файлы. Название будет отображаться в списке.</small>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="alert alert-info mt-5">
+        <i class="fas fa-info-circle me-2"></i> Данная информационная система (Реестр МУИВ) создана для автоматизации учета материально-технической базы и организационной структуры университета.
     </div>
 </div>
+
+<style>
+    .border-dashed { border-style: dashed !important; border-width: 2px !important; }
+</style>
 {% endblock %}

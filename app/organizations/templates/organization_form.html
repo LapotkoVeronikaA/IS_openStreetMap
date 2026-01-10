@@ -142,7 +142,7 @@
                     </div>
                     <div class="col-md-6">
                         <div class="p-3 border rounded h-100">
-                            <label class="form-label fw-bold">Планы помещений / Чертежи (PDF, JPG)</label>
+                            <label class="form-label fw-bold">Доп. материалы, положения, уставы и т.д. (PDF, JPG)</label>
                             <input class="form-control" type="file" name="floor_plans" multiple>
                             
                             {% if floor_plans %}
@@ -150,7 +150,7 @@
                                  {% for plan_url in floor_plans %}
                                  <div class="d-flex justify-content-between align-items-center border-bottom py-1">
                                      <a href="{{ plan_url }}" target="_blank" class="small text-truncate" style="max-width: 80%;">
-                                         <i class="fas fa-file-pdf me-1 text-danger"></i> {{ plan_url.split('/')[-1] }}
+                                         <i class="fas fa-file-alt me-1 text-primary"></i> {{ plan_url.split('/')[-1] }}
                                      </a>
                                      <button type="button" class="btn btn-link text-danger btn-sm p-0 delete-file-btn" 
                                              data-org-id="{{ org.id }}" data-subfolder="floor_plans" data-filename="{{ plan_url.split('/')[-1] }}">
