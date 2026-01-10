@@ -1,6 +1,6 @@
 # app/map/routes.py
 from flask import render_template, url_for, jsonify, flash, redirect
-from app.models import Organization
+from app.models import Organization, GenericDirectoryItem
 from app.utils import check_user_permission, permission_required_manual
 from app.organizations.routes import get_files_for_org
 from . import map_bp
@@ -16,14 +16,12 @@ def show_map():
         Organization.longitude.isnot(None)
     ).order_by(Organization.name).all()
 
-    # Собираем уникальные типы для фильтров
-    org_types = sorted(list(set(o.org_type for o in organizations if o.org_type)))
+    all_directory_types = GenericDirectoryItem.query.filter_by(directory_type='org_type').all()
+    org_types = sorted([t.name for t in all_directory_types])
 
     for org in organizations:
-        # Упрощаем ключ для иконки
         icon_key = re.sub(r'[^а-яА-Я0-9]', '', org.org_type) if org.org_type else "default"
 
-        # Формируем список отделов (детей) вручную для JSON
         children_list = []
         for child in org.children:
             children_list.append({
@@ -55,9 +53,7 @@ def show_map():
                 'departments': children_list, 
                 'contacts': org.get_contacts(),
                 'photos': get_files_for_org(org.id, 'photos'),
-                'floor_plans': get_files_for_org(org.id, 'floor_plans'),
-                
-                # ССЫЛКИ ДЛЯ ИНТЕРФЕЙСА (включая отчеты)
+                'floor_plans': get_files_for_org(org.id, 'floor_plans'),                
                 'edit_url': url_for('organizations.edit_org', org_id=org.id),
                 'view_url': url_for('organizations.view_org', org_id=org.id),
                 'export_docx_url': url_for('organizations.export_docx', org_id=org.id),

@@ -10,7 +10,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # API ключ Яндекс.Геокодера
-    YANDEX_GEOCODER_API_KEY = "yandex-geocoder-api-key"
+    YANDEX_GEOCODER_API_KEY = "bf6a5825-d12d-4d1d-8800-066f5f2f3003"
     
     # Ключ для доступа к API
     API_SECRET_KEY = os.environ.get('API_SECRET_KEY') or '70192100_api_secret_key'
