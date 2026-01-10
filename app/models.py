@@ -63,7 +63,6 @@ class Organization(db.Model):
     __tablename__ = 'organization'
     id = db.Column(db.Integer, primary_key=True)
     
-    # Иерархия: родитель и дети
     parent_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
     children = db.relationship('Organization', backref=db.backref('parent', remote_side=[id]), lazy='dynamic', cascade="all, delete-orphan")
 
@@ -89,8 +88,6 @@ class Organization(db.Model):
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
     
-    events = db.relationship('Event', back_populates='organization', lazy='dynamic', cascade="all, delete-orphan")
-    
     def set_contacts(self, contacts_list):
         if contacts_list: self.contacts = json.dumps(contacts_list, ensure_ascii=False)
         else: self.contacts = None
@@ -106,7 +103,6 @@ class Organization(db.Model):
 
     @property
     def website_url(self):
-        """Возвращает абсолютную ссылку на сайт (с http), даже если введено просто www..."""
         if not self.website:
             return None
         if self.website.startswith('http://') or self.website.startswith('https://'):
@@ -117,7 +113,6 @@ class Organization(db.Model):
 
 class GenericDirectoryItem(db.Model):
     __tablename__ = 'generic_directory_item'
-    
     id = db.Column(db.Integer, primary_key=True)
     directory_type = db.Column(db.String(100), nullable=False, index=True)
     name = db.Column(db.String(200), nullable=False)
@@ -138,9 +133,7 @@ class Feedback(db.Model):
     is_read = db.Column(db.Boolean, default=False, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) 
     user = db.relationship('User')
-    
-    def __repr__(self):
-        return f'<Feedback {self.subject}>'
+    def __repr__(self): return f'<Feedback {self.subject}>'
 
 class News(db.Model):
     __tablename__ = 'news'
@@ -150,18 +143,14 @@ class News(db.Model):
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) 
     user = db.relationship('User')
+    def __repr__(self): return f'<News {self.title}>'
 
-    def __repr__(self):
-        return f'<News {self.title}>'
-
-class Event(db.Model):
-    __tablename__ = 'events'
+class UniversityDoc(db.Model):
+    __tablename__ = 'university_docs'
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text)
-    event_date = db.Column(db.DateTime, nullable=False)
-    organization_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
-    organization = db.relationship('Organization', back_populates='events')
-
-    def __repr__(self):
-        return f'<Event {self.title}>'
+    title = db.Column(db.String(255), nullable=False)
+    filename = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    user = db.relationship('User')
+    def __repr__(self): return f'<UniversityDoc {self.title}>'

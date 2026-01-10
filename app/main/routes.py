@@ -3,7 +3,7 @@ import os
 import uuid
 from flask import render_template, redirect, url_for, request, flash, current_app
 from app.extensions import db
-from app.models import Feedback, News, Organization
+from app.models import Feedback, News, Organization, UniversityDoc
 from app.utils import get_current_user_obj, permission_required_manual, log_user_activity, check_user_permission
 from . import main_bp
 from sqlalchemy import func
@@ -19,53 +19,64 @@ def about():
 
 @main_bp.route('/university', methods=['GET', 'POST'])
 def university():
-    """Страница 'Об университете' с возможностью загрузки PDF-документов для админов"""
-    upload_path = os.path.join(current_app.static_folder, 'uploads', 'university')
-    
-    if not os.path.exists(upload_path):
-        os.makedirs(upload_path)
-
+    """Страница 'Об университете' с документами из базы данных"""
     if request.method == 'POST' and check_user_permission('manage_organizations'):
         file = request.files.get('doc_file')
-        doc_name = request.form.get('doc_name')
+        doc_title = request.form.get('doc_name')
         
-        if file and file.filename.lower().endswith('.pdf'):
-            filename = secure_filename(f"{doc_name}_{uuid.uuid4().hex[:8]}.pdf")
+        if file and file.filename.lower().endswith('.pdf') and doc_title:
+            upload_path = os.path.join(current_app.static_folder, 'uploads', 'university')
+            if not os.path.exists(upload_path):
+                os.makedirs(upload_path)
+            
+            # Генерация уникального имени файла
+            filename = secure_filename(f"{uuid.uuid4().hex}.pdf")
             file.save(os.path.join(upload_path, filename))
-            log_user_activity(f"Загружен официальный документ: {doc_name}", "UniversityDoc")
-            flash(f'Документ "{doc_name}" успешно загружен.', 'success')
+            
+            # Сохранение записи в БД
+            new_doc = UniversityDoc(
+                title=doc_title,
+                filename=filename,
+                user_id=get_current_user_obj().id if get_current_user_obj() else None
+            )
+            db.session.add(new_doc)
+            db.session.commit()
+            
+            log_user_activity(f"Загружен официальный документ: {doc_title}", "UniversityDoc", new_doc.id)
+            flash(f'Документ "{doc_title}" успешно загружен.', 'success')
             return redirect(url_for('main.university'))
         else:
-            flash('Ошибка: допускаются только файлы в формате PDF.', 'danger')
+            flash('Ошибка: необходимо указать название и выбрать PDF-файл.', 'danger')
 
-    documents = []
-    if os.path.exists(upload_path):
-        for filename in sorted(os.listdir(upload_path)):
-            if filename.endswith('.pdf'):
-                # до первого подчеркивания
-                display_name = filename.rsplit('_', 1)[0]
-                documents.append({
-                    'filename': filename,
-                    'name': display_name,
-                    'url': url_for('static', filename=f'uploads/university/{filename}')
-                })
-
+    # Получаем документы из базы данных
+    documents = UniversityDoc.query.order_by(UniversityDoc.created_at.desc()).all()
     return render_template('university.html', documents=documents)
 
-@main_bp.route('/university/delete-doc/<string:filename>', methods=['POST'])
+@main_bp.route('/university/delete-doc/<int:doc_id>', methods=['POST'])
 @permission_required_manual('manage_organizations')
-def delete_university_doc(filename):
-    """Удаление документа университета"""
-    file_path = os.path.join(current_app.static_folder, 'uploads', 'university', filename)
-    if os.path.exists(file_path):
-        os.remove(file_path)
-        log_user_activity(f"Удален официальный документ: {filename}", "UniversityDoc")
-        flash('Документ удален.', 'info')
+def delete_university_doc(doc_id):
+    """Удаление документа из БД и с диска"""
+    doc = UniversityDoc.query.get_or_404(doc_id)
+    file_path = os.path.join(current_app.static_folder, 'uploads', 'university', doc.filename)
+    
+    try:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        
+        doc_title = doc.title
+        db.session.delete(doc)
+        db.session.commit()
+        
+        log_user_activity(f"Удален официальный документ: {doc_title}", "UniversityDoc", doc_id)
+        flash(f'Документ "{doc_title}" удален.', 'info')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка при удалении: {e}', 'danger')
+        
     return redirect(url_for('main.university'))
 
 @main_bp.route('/analytics')
 def analytics():
-    """Страница 'Аналитика'"""
     stats = {
         'total_orgs': Organization.query.count(),
         'by_type': db.session.query(Organization.org_type, func.count(Organization.id)).group_by(Organization.org_type).all(),
@@ -102,7 +113,6 @@ def add_news():
         log_user_activity(f"Создана новость: '{title}'", "News", new_item.id)
         flash('Новость успешно создана.', 'success')
         return redirect(url_for('main.news_list'))
-        
     return render_template('news_form.html', form_data={})
 
 @main_bp.route('/news/edit/<int:news_id>', methods=['GET', 'POST'])
@@ -123,7 +133,6 @@ def edit_news(news_id):
         log_user_activity(f"Отредактирована новость: '{title}'", "News", news_item.id)
         flash('Новость успешно обновлена.', 'success')
         return redirect(url_for('main.view_news_item', news_id=news_item.id))
-
     return render_template('news_form.html', news_item=news_item)
 
 @main_bp.route('/news/delete/<int:news_id>', methods=['POST'])
@@ -133,7 +142,6 @@ def delete_news(news_id):
     title = news_item.title
     db.session.delete(news_item)
     db.session.commit()
-    
     log_user_activity(f"Удалена новость: '{title}'", "News", news_id)
     flash('Новость успешно удалена.', 'success')
     return redirect(url_for('main.news_list'))
@@ -164,7 +172,6 @@ def contacts():
         log_user_activity(f"Отправлено сообщение обратной связи: '{subject}'", "Feedback", feedback_entry.id)
         flash('Спасибо! Ваше сообщение успешно отправлено.', 'success')
         return redirect(url_for('main.contacts'))
-
     return render_template('contacts.html', user=user, form_data={})
 
 @main_bp.route('/help')
