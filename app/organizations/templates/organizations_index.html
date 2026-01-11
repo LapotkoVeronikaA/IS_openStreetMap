@@ -8,16 +8,101 @@
 
 {% block extra_css %}
 <style>
-    .tree-container { font-family: 'Segoe UI', sans-serif; }
-    .tree-node { position: relative; list-style: none; }
-    .tree-ul { padding-left: 20px; margin-left: 10px; border-left: 1px solid #dee2e6; }
-    .tree-node::before { content: ""; position: absolute; top: 18px; left: -20px; width: 15px; border-bottom: 1px solid #dee2e6; }
-    .tree-root { border-left: none; padding-left: 0; }
-    .tree-content { display: flex; align-items: center; padding: 8px 12px; border-radius: 6px; transition: 0.2s; background: #fff; margin-bottom: 4px; border: 1px solid transparent; }
-    .tree-content:hover { background-color: #f1f5f9; border-color: #e2e8f0; }
-    .toggle-icon { cursor: pointer; width: 24px; margin-right: 8px; color: #64748b; }
-    .type-icon { margin-right: 10px; width: 20px; text-align: center; }
-    .icon-uni { color: #dc3545; } .icon-branch { color: #d63384; } .icon-faculty { color: #0d6efd; }
+    /* Основные стили дерева */
+    .tree-container { 
+        font-family: 'Segoe UI', sans-serif; 
+        overflow-x: auto; /* Добавляет скролл, если дерево уходит вправо */
+        padding-bottom: 10px; /* Отступ для скроллбара */
+    }
+    .tree-node { 
+        position: relative; 
+        list-style: none; 
+        min-width: 300px; /* Минимальная ширина, чтобы контент не сжимался в 0 */ 
+    }
+    .tree-ul { 
+        padding-left: 20px; 
+        margin-left: 10px; 
+        border-left: 1px solid #dee2e6; 
+    }
+    .tree-node::before { 
+        content: ""; 
+        position: absolute; 
+        top: 18px; 
+        left: -20px; 
+        width: 15px; 
+        border-bottom: 1px solid #dee2e6; 
+    }
+    .tree-root { 
+        border-left: none; 
+        padding-left: 0; 
+    }
+    
+    /* Контейнер строки дерева */
+    .tree-content { 
+        display: flex; 
+        align-items: center; 
+        padding: 8px 12px; 
+        border-radius: 6px; 
+        transition: 0.2s; 
+        background: #fff; 
+        margin-bottom: 4px; 
+        border: 1px solid transparent; 
+        flex-wrap: wrap; /* Разрешаем перенос элементов внутри строки */
+    }
+    .tree-content:hover { 
+        background-color: #f1f5f9; 
+        border-color: #e2e8f0; 
+    }
+    
+    .toggle-icon { 
+        cursor: pointer; 
+        width: 24px; 
+        margin-right: 8px; 
+        color: #64748b; 
+    }
+    .type-icon { 
+        margin-right: 10px; 
+        width: 20px; 
+        text-align: center; 
+    }
+    
+    .tree-text-content {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap; /* Перенос для мобилок */
+        gap: 10px;
+    }
+
+    /* Стили для иконок типов */
+    .icon-uni { color: #dc3545; } 
+    .icon-branch { color: #d63384; } 
+    .icon-faculty { color: #0d6efd; }
+
+    /* Адаптация под мобильные устройства */
+    @media (max-width: 576px) {
+        .tree-ul { 
+            padding-left: 10px; /* Уменьшаем отступ вложенности на мобильном */
+            margin-left: 5px; 
+        }
+        .tree-node::before { width: 8px; left: -13px; } /* Корректируем линии */
+        
+        .tree-text-content {
+            flex-direction: column; /* Кнопки под текстом */
+            align-items: flex-start;
+            width: 100%;
+        }
+        
+        .tree-actions {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end; /* Кнопки справа */
+            border-top: 1px solid #f0f0f0;
+            margin-top: 5px;
+            padding-top: 5px;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -102,33 +187,42 @@
 {% macro render_tree_node(org) %}
 <li class="tree-node">
     <div class="tree-content">
+        <!-- Иконка сворачивания/разворачивания -->
         {% if org.children.count() > 0 %}
             <div class="toggle-icon" data-bs-toggle="collapse" data-bs-target="#node-{{ org.id }}"><i class="fas fa-plus-square"></i></div>
         {% else %}
             <div class="toggle-icon" style="opacity: 0.2;"><i class="fas fa-minus"></i></div>
         {% endif %}
+        
+        <!-- Иконка типа -->
         <div class="type-icon">
             {% if 'Университет' in (org.org_type or '') %}<i class="fas fa-university icon-uni"></i>
             {% elif 'Филиал' in (org.org_type or '') %}<i class="fas fa-building icon-branch"></i>
             {% elif 'Факультет' in (org.org_type or '') %}<i class="fas fa-graduation-cap icon-faculty"></i>
             {% else %}<i class="fas fa-folder text-warning opacity-75"></i>{% endif %}
         </div>
-        <div class="flex-grow-1 d-flex align-items-center justify-content-between">
+
+        <!-- Текст и Кнопки -->
+        <div class="tree-text-content">
+            <!-- Название и Тип -->
             <div>
-                <a href="{{ url_for('organizations.view_org', org_id=org.id) }}" class="text-decoration-none fw-bold text-dark">{{ org.name }}</a>
+                <a href="{{ url_for('organizations.view_org', org_id=org.id) }}" class="text-decoration-none fw-bold text-dark text-break">{{ org.name }}</a>
                 <span class="badge bg-light text-muted border ms-2" style="font-size: 0.65rem;">{{ org.org_type }}</span>
             </div>
-            <div class="btn-group btn-group-sm">
-                 <a href="{{ url_for('organizations.view_org', org_id=org.id) }}" class="btn btn-link text-secondary p-1"><i class="fas fa-eye"></i></a>
+            
+            <!-- Группа кнопок (Actions) -->
+            <div class="btn-group btn-group-sm tree-actions">
+                 <a href="{{ url_for('organizations.view_org', org_id=org.id) }}" class="btn btn-link text-secondary p-1" title="Просмотр"><i class="fas fa-eye"></i></a>
                  {% if check_user_permission('manage_organizations') %}
-                 <a href="{{ url_for('organizations.edit_org', org_id=org.id) }}" class="btn btn-link text-primary p-1"><i class="fas fa-edit"></i></a>
+                 <a href="{{ url_for('organizations.edit_org', org_id=org.id) }}" class="btn btn-link text-primary p-1" title="Редактировать"><i class="fas fa-edit"></i></a>
                  <form action="{{ url_for('organizations.delete_org', org_id=org.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Удалить объект и все подчиненные элементы?');">
-                    <button type="submit" class="btn btn-link text-danger p-1"><i class="fas fa-trash-alt"></i></button>
+                    <button type="submit" class="btn btn-link text-danger p-1" title="Удалить"><i class="fas fa-trash-alt"></i></button>
                  </form>
                  {% endif %}
             </div>
         </div>
     </div>
+    
     {% if org.children.count() > 0 %}
     <ul class="tree-ul collapse" id="node-{{ org.id }}">
         {% for child in org.children %}
