@@ -97,6 +97,22 @@
         </div>
 
         <div class="col-lg-4">
+            <div class="card-modern p-3 mb-4 border-primary">
+                <h3 class="h6 text-uppercase text-primary fw-bold border-bottom pb-2 mb-3">
+                    <i class="fas fa-print me-2"></i>Экспорт документации
+                </h3>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('organizations.export_docx', org_id=org.id) }}" class="btn btn-outline-primary text-start">
+                        <i class="fas fa-file-word me-2"></i> Информационная карточка (Word)
+                    </a>
+                    <a href="{{ url_for('organizations.export_xlsx', org_id=org.id) }}" class="btn btn-outline-success text-start">
+                        <i class="fas fa-file-excel me-2"></i> Статистика объекта (Excel)
+                    </a>
+                </div>
+                <div class="form-text mt-2 small">
+                    * Отчеты формируются автоматически на основе актуальных данных базы.
+                </div>
+            </div>
             <div class="card-modern p-3">
                 <h3 class="h6 text-uppercase text-muted border-bottom pb-2 mb-3">Сотрудники</h3>
                 {% if org.get_contacts() %}

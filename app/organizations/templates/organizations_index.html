@@ -212,6 +212,19 @@
             
             <!-- Группа кнопок (Actions) -->
             <div class="btn-group btn-group-sm tree-actions">
+                 <div class="dropdown d-inline">
+                     <button class="btn btn-link text-success p-1" data-bs-toggle="dropdown" title="Скачать отчет">
+                         <i class="fas fa-file-download"></i>
+                     </button>
+                     <ul class="dropdown-menu shadow">
+                         <li><a class="dropdown-item" href="{{ url_for('organizations.export_docx', org_id=org.id) }}">
+                             <i class="fas fa-file-word me-2 text-primary"></i>Ворд-карточка (.docx)
+                         </a></li>
+                         <li><a class="dropdown-item" href="{{ url_for('organizations.export_xlsx', org_id=org.id) }}">
+                             <i class="fas fa-file-excel me-2 text-success"></i>Таблица (.xlsx)
+                         </a></li>
+                     </ul>
+                 </div>
                  <a href="{{ url_for('organizations.view_org', org_id=org.id) }}" class="btn btn-link text-secondary p-1" title="Просмотр"><i class="fas fa-eye"></i></a>
                  {% if check_user_permission('manage_organizations') %}
                  <a href="{{ url_for('organizations.edit_org', org_id=org.id) }}" class="btn btn-link text-primary p-1" title="Редактировать"><i class="fas fa-edit"></i></a>
