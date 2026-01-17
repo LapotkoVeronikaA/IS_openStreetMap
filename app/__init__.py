@@ -1,5 +1,5 @@
 # app/__init__.py
-from flask import Flask
+from flask import Flask, app
 from .config import Config
 from .extensions import db, migrate
 from .utils import USER_GROUPS, get_current_user_obj, check_user_permission, geocode_location
@@ -37,7 +37,8 @@ def create_app(config_class=Config):
     app.register_blueprint(api_bp, url_prefix='/api')
     from .profile import profile_bp
     app.register_blueprint(profile_bp, url_prefix='/profile')
-
+    from .files import files_bp
+    app.register_blueprint(files_bp, url_prefix='/files')
 
     @app.context_processor
     def inject_global_vars():
@@ -118,7 +119,8 @@ def create_app(config_class=Config):
                 'view_profile': 'Просматривать личный кабинет',
                 'manage_news': 'Управлять новостями',
                 'manage_directory': 'Управлять справочниками',
-                'view_directory': 'Просматривать справочники'
+                'view_directory': 'Просматривать справочники',
+                'view_files': 'Просматривать файловую систему',
             }
 
             # 3. Создание объектов прав

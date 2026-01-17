@@ -18,6 +18,7 @@ USER_GROUPS = {
             'view_map': True,
             'view_profile': True,
             'manage_news': True,
+            'view_files': True
         }
     },
     'guest': {
@@ -38,11 +39,12 @@ USER_GROUPS = {
             'view_profile': True,
         }
     },
-    'viewer': {
-        'name': 'Просмотр',
+    'content_manager': {
+        'name': 'Менеджер реестра',
         'is_deletable': True,
         'permissions': {
             'view_organizations': True,
+            'manage_organizations': True,
             'view_map': True,
             'view_profile': True,
         }

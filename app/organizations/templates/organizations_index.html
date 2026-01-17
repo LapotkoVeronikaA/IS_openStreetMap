@@ -108,10 +108,18 @@
 
 {% block content %}
 <div class="card-modern p-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="h4 mb-0"><i class="fas fa-sitemap me-3 text-primary"></i>Справочная система реестра</h2>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center border-bottom pb-4 mb-4 gap-3">
+        <div>
+            <h2 class="h3 mb-1"><i class="fas fa-sitemap me-3 text-primary"></i>Информационно-справочный реестр</h2>
+            <p class="text-muted mb-0">Управление иерархической структурой подразделений университета</p>
+        </div>
+        
         {% if check_user_permission('manage_organizations') %}
-        <a href="{{ url_for('organizations.add_org') }}" class="btn btn-primary btn-sm px-3 shadow-sm"><i class="fas fa-plus me-2"></i>Добавить</a>
+        <div class="d-grid d-md-block">
+            <a href="{{ url_for('organizations.add_org') }}" class="btn btn-primary btn-lg px-4 shadow">
+                <i class="fas fa-plus-circle me-2"></i>Добавить новую организацию
+            </a>
+        </div>
         {% endif %}
     </div>
 

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Файловое хранилище{% endblock %}
+
+{% block breadcrumbs %}
+  {{ breadcrumbs([('Файловое хранилище', url_for('files.manager'))]) }}
+{% endblock %}
+
+{% block content %}
+<div class="card-modern p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h4 mb-0"><i class="fas fa-folder-open me-3 text-warning"></i>Проводник файлов реестра</h2>
+    </div>
+
+    <!-- Навигация (Хлебные крошки) -->
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb bg-light p-2 rounded">
+        <li class="breadcrumb-item"><a href="{{ url_for('files.manager') }}">Корень (uploads)</a></li>
+        {% for name, path in breadcrumbs_list %}
+        <li class="breadcrumb-item"><a href="{{ url_for('files.manager', subpath=path) }}">{{ name }}</a></li>
+        {% endfor %}
+      </ol>
+    </nav>
+
+    <div class="table-responsive mt-3">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Имя</th>
+                    <th>Размер</th>
+                    <th class="text-end">Действие</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if current_path %}
+                <tr>
+                    <td colspan="3">
+                        <a href="{{ url_for('files.manager', subpath='/'.join(current_path.split('/')[:-1])) }}" class="text-decoration-none">
+                            <i class="fas fa-level-up-alt me-2"></i>... Наверх
+                        </a>
+                    </td>
+                </tr>
+                {% endif %}
+
+                {% for item in items %}
+                <tr>
+                    <td>
+                        {% if item.is_dir %}
+                        <i class="fas fa-folder text-warning me-2"></i>
+                        <a href="{{ url_for('files.manager', subpath=item.path) }}" class="fw-bold text-dark">{{ item.name }}</a>
+                        {% else %}
+                        <i class="fas 
+                            {% if item.ext in ['jpg', 'jpeg', 'png', 'gif'] %}fa-file-image text-info
+                            {% elif item.ext == 'pdf' %}fa-file-pdf text-danger
+                            {% elif item.ext in ['doc', 'docx'] %}fa-file-word text-primary
+                            {% elif item.ext in ['xls', 'xlsx'] %}fa-file-excel text-success
+                            {% else %}fa-file text-muted{% endif %} me-2"></i>
+                        <span>{{ item.name }}</span>
+                        {% endif %}
+                    </td>
+                    <td><small class="text-muted">{{ item.size }}</small></td>
+                    <td class="text-end">
+                        {% if not item.is_dir %}
+                        <a href="{{ url_for('static', filename='uploads/' + item.path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-download"></i>
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

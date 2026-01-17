@@ -74,6 +74,13 @@
                         <li><a class="dropdown-item" href="{{ url_for('logs.view_logs') }}"><i
                                     class="fas fa-clipboard-list fa-fw me-2"></i>Журнал действий</a></li>
                         {% endif %}
+                        {% if check_user_permission('view_files') %}
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('files.manager') }}">
+                                <i class="fas fa-hdd fa-fw me-2"></i>Файловая система
+                            </a>
+                        </li>
+                        {% endif %}
                     </ul>
                 </li>
                 {% endif %}
