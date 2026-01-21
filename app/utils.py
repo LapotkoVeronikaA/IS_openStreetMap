@@ -18,7 +18,9 @@ USER_GROUPS = {
             'view_map': True,
             'view_profile': True,
             'manage_news': True,
-            'view_files': True
+            'view_files': True,
+            'send_feedback': True,
+            'manage_feedback': True,
         }
     },
     'guest': {
@@ -27,6 +29,7 @@ USER_GROUPS = {
         'permissions': {
              'view_map': True,
              'view_organizations': True,
+             'send_feedback': False,
         }
     },
     'org_manager': {
@@ -43,8 +46,8 @@ USER_GROUPS = {
         'name': 'Менеджер реестра',
         'is_deletable': True,
         'permissions': {
-            'view_organizations': True,
-            'manage_organizations': True,
+            'manage_news': True,
+            'view_files': True,
             'view_map': True,
             'view_profile': True,
         }

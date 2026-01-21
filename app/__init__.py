@@ -121,6 +121,8 @@ def create_app(config_class=Config):
                 'manage_directory': 'Управлять справочниками',
                 'view_directory': 'Просматривать справочники',
                 'view_files': 'Просматривать файловую систему',
+                'send_feedback': 'Отправлять отзывы',
+                'manage_feedback': 'Управлять отзывами',
             }
 
             # 3. Создание объектов прав

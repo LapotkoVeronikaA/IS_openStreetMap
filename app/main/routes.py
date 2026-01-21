@@ -147,6 +147,7 @@ def delete_news(news_id):
     return redirect(url_for('main.news_list'))
 
 @main_bp.route('/contacts', methods=['GET', 'POST'])
+@permission_required_manual('send_feedback')
 def contacts():
     user = get_current_user_obj()
     if request.method == 'POST':
@@ -179,16 +180,33 @@ def help_page():
     return render_template('help.html')
 
 @main_bp.route('/feedback')
-@permission_required_manual('manage_users') 
+@permission_required_manual('send_feedback')
 def view_feedback():
     page = request.args.get('page', 1, type=int)
     feedback_items = Feedback.query.order_by(Feedback.created_at.desc()).paginate(page=page, per_page=15, error_out=False)
     return render_template('feedback_list.html', feedback_items=feedback_items)
 
 @main_bp.route('/feedback/<int:feedback_id>/toggle_read', methods=['POST'])
-@permission_required_manual('manage_users')
+@permission_required_manual('manage_feedback')
 def toggle_feedback_read(feedback_id):
     feedback_item = Feedback.query.get_or_404(feedback_id)
     feedback_item.is_read = not feedback_item.is_read
     db.session.commit()
+    return redirect(url_for('main.view_feedback'))
+
+@main_bp.route('/feedback/delete/<int:feedback_id>', methods=['POST'])
+@permission_required_manual('manage_feedback')
+def delete_feedback(feedback_id):
+    feedback_item = Feedback.query.get_or_404(feedback_id)
+    subject = feedback_item.subject
+    
+    try:
+        db.session.delete(feedback_item)
+        db.session.commit()
+        log_user_activity(f"Удалено обращение: '{subject}'", "Feedback", feedback_id)
+        flash(f'Обращение "{subject}" успешно удалено.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка при удалении: {e}', 'danger')
+        
     return redirect(url_for('main.view_feedback'))

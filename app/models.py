@@ -2,6 +2,10 @@
 from app.extensions import db
 import json
 from sqlalchemy import UniqueConstraint
+from datetime import datetime, timedelta
+
+def get_moscow_now():
+    return datetime.utcnow() + timedelta(hours=3)
 
 # Вспомогательная таблица для связи "многие-ко-многим" между группами и правами
 group_permissions = db.Table('group_permissions',
@@ -29,6 +33,7 @@ class Permission(db.Model):
         return f'<Permission {self.name}>'
 
 class User(db.Model):
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
@@ -42,6 +47,7 @@ class User(db.Model):
     def __repr__(self): return f'<User {self.username}>'
 
 class UserActivity(db.Model):
+    __tablename__ = 'user_activity'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_user_activity_user_id'), nullable=True)
     username = db.Column(db.String(80), nullable=False)
@@ -49,7 +55,7 @@ class UserActivity(db.Model):
     entity_type = db.Column(db.String(50))
     entity_id = db.Column(db.Integer)
     ip_address = db.Column(db.String(50))
-    timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
+    timestamp = db.Column(db.DateTime, default=get_moscow_now) 
     details = db.Column(db.Text) 
     def __repr__(self): return f'<UserActivity {self.username} - {self.action[:30]}>'
     def set_details(self, data): self.details = json.dumps(data, ensure_ascii=False, indent=2)
@@ -85,8 +91,8 @@ class Organization(db.Model):
     latitude = db.Column(db.Float, nullable=True)
     longitude = db.Column(db.Float, nullable=True)
     
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
-    updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+    created_at = db.Column(db.DateTime, default=get_moscow_now)
+    updated_at = db.Column(db.DateTime, default=get_moscow_now, onupdate=get_moscow_now)
     
     def set_contacts(self, contacts_list):
         if contacts_list: self.contacts = json.dumps(contacts_list, ensure_ascii=False)
@@ -129,7 +135,7 @@ class Feedback(db.Model):
     email = db.Column(db.String(150), nullable=False)
     subject = db.Column(db.String(200), nullable=False)
     message = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    created_at = db.Column(db.DateTime, default=get_moscow_now)
     is_read = db.Column(db.Boolean, default=False, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) 
     user = db.relationship('User')
@@ -140,7 +146,7 @@ class News(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    created_at = db.Column(db.DateTime, default=get_moscow_now)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) 
     user = db.relationship('User')
     def __repr__(self): return f'<News {self.title}>'
@@ -150,7 +156,7 @@ class UniversityDoc(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
     filename = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    created_at = db.Column(db.DateTime, default=get_moscow_now)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     user = db.relationship('User')
     def __repr__(self): return f'<UniversityDoc {self.title}>'
